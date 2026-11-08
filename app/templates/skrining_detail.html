@@ -1,54 +1,61 @@
-{% extends "base.html" %}{% block body %}
-<div class="aksi noprint" style="justify-content:space-between;margin-bottom:8px">
-  <a href="{{ url_for('anak_detail', aid=a.id) }}">← {{ a.nama }}</a>
-  <button class="btn alt kecil" onclick="print()">Cetak</button>
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block body %}
+<div class="kepala noprint" style="margin-bottom:10px">
+  <a class="btn alt kecil" href="{{ url_for('anak_detail', aid=a.id) }}">← {{ a.nama }}</a>
+  <button class="btn alt kecil" onclick="print()">{{ ikon('cetak') }} Cetak</button>
 </div>
-<h1>Hasil skrining · {{ a.nama }}</h1>
-<div class="kartu reveal">
-  <div class="gz">
+
+<div class="kartu reveal profil-anak">
+  <div class="profil-kepala">
+    <span class="ava {{ a.jk }}">{{ a.nama[:1]|upper }}</span>
+    <div><h1>{{ a.nama }}</h1><div class="redup kecil">Hasil skrining {{ s.tgl_periksa|tgl }} · pemeriksa {{ guru.nama if guru else '—' }}</div></div>
+  </div>
+  <div class="info-grid">
     <div><small>PAUD / TK</small><b>{{ a.paud_nama }}</b></div>
     <div><small>Kelurahan</small><b>{{ a.kelurahan_nama }}</b></div>
     <div><small>Jenis kelamin</small><b>{{ 'Laki-laki' if a.jk=='L' else 'Perempuan' }}</b></div>
     <div><small>Tanggal lahir</small><b>{{ a.tgl_lahir|tgl }}</b></div>
-    <div><small>Tanggal periksa</small><b>{{ s.tgl_periksa|tgl }}</b></div>
-    <div><small>Umur</small><b>{{ s.umur_teks }}</b><small>dibulatkan {{ s.umur_bulan }} bulan</small></div>
-    <div><small>Pemeriksa (guru)</small><b>{{ guru.nama if guru else '—' }}</b></div>
+    <div><small>Umur saat periksa</small><b>{{ s.umur_teks }}</b><small>dibulatkan {{ s.umur_bulan }} bulan</small></div>
   </div>
 </div>
 
-<div class="grid g2">
+<div class="grid g2 detail-grid">
 <div class="kartu reveal">
-  <h2>Perkembangan (KPSP)</h2>
+  <h2><span class="ikon-h">{{ ikon('grafik') }}</span>Perkembangan (KPSP)</h2>
   {% if s.hasil_kpsp %}
   <div class="hasil-box {{ s.hasil_kpsp|warna }}"><small>KPSP {{ s.kpsp_umur }} bulan · jawaban Ya {{ s.skor }}/10</small><b class="big">{{ s.hasil_kpsp }}</b>
     <span class="kecil">{{ tindakan }}</span></div>
+  <div class="skor-titik" aria-label="Jawaban per pertanyaan">{% for j in s.jawaban %}<span class="{{ 'ya' if j=='Y' else 'tidak' }}" title="Pertanyaan {{ loop.index }}: {{ 'Ya' if j=='Y' else 'Tidak' }}">{{ loop.index }}</span>{% endfor %}</div>
   <p class="kecil redup">Interpretasi: 9–10 sesuai umur · 7–8 meragukan · ≤6 penyimpangan</p>
-  {% if soal %}<details><summary class="kecil" style="cursor:pointer">Lihat jawaban per pertanyaan</summary>
-    <table style="margin-top:8px">{% for q in soal.soal %}{% set j = s.jawaban[loop.index0] %}
-      <tr><td class="kecil">{{ loop.index }}. {{ q[0] }} <span class="redup">({{ q[1] }})</span></td>
+  {% if soal %}<details class="gambar"><summary>Lihat jawaban per pertanyaan</summary>
+    <table class="tbl-jawaban">{% for q in soal.soal %}{% set j = s.jawaban[loop.index0] %}
+      <tr><td class="no-soal">{{ loop.index }}</td><td class="kecil teks-soal">{{ q[0] }}<small class="sub-sel">{{ q[1] }}</small></td>
           <td><span class="badge {{ 'hijau' if j=='Y' else 'merah' }}">{{ 'Ya' if j=='Y' else 'Tidak' }}</span></td></tr>{% endfor %}</table></details>{% endif %}
   {% else %}<p class="redup">KPSP tidak dilakukan (umur di luar rentang).</p>{% endif %}
-  {% if s.catatan_guru %}<p><b>Catatan guru:</b> {{ s.catatan_guru }}</p>{% endif %}
+  {% if s.catatan_guru %}<div class="catatan"><b>Catatan guru</b><p>{{ s.catatan_guru }}</p></div>{% endif %}
 </div>
 
 <div class="kartu reveal">
-  <h2>Status gizi</h2>
-  {% if s.status_gizi %}<div class="hasil-box {{ s.status_gizi|warna }}"><small>Status gizi</small><b class="big">{{ s.status_gizi }}</b></div>{% endif %}
-  <table>
-    <tr><th>Ukuran</th><th class="n">Nilai</th><th>Indeks</th><th class="n">z</th><th>Klasifikasi</th></tr>
-    <tr><td>Berat badan</td><td class="n">{{ s.bb or '—' }} kg</td><td>BB/U</td><td class="n">{{ s.z_bbu if s.z_bbu is not none else '' }}</td><td>{% if s.st_bbu %}<span class="badge {{ s.st_bbu|warna }}">{{ s.st_bbu }}</span>{% endif %}</td></tr>
-    <tr><td>{{ 'Panjang' if s.cara_ukur=='terlentang' else 'Tinggi' }} badan</td><td class="n">{{ s.tb or '—' }} cm</td><td>PB/U / TB/U</td><td class="n">{{ s.z_tbu if s.z_tbu is not none else '' }}</td><td>{% if s.st_tbu %}<span class="badge {{ s.st_tbu|warna }}">{{ s.st_tbu }}</span>{% endif %}</td></tr>
-    <tr><td></td><td></td><td>BB/PB / BB/TB</td><td class="n">{{ s.z_bbtb if s.z_bbtb is not none else '' }}</td><td>{% if s.st_bbtb %}<span class="badge {{ s.st_bbtb|warna }}">{{ s.st_bbtb }}</span>{% endif %}</td></tr>
-    <tr><td>IMT</td><td class="n">{{ s.imt or '—' }}</td><td>IMT/U</td><td class="n">{{ s.z_imtu if s.z_imtu is not none else '' }}</td><td>{% if s.st_imtu %}<span class="badge {{ s.st_imtu|warna }}">{{ s.st_imtu }}</span>{% endif %}</td></tr>
-    <tr><td>Lingkar kepala</td><td class="n">{{ s.lk or '—' }} cm</td><td>LK/U</td><td class="n">{{ s.z_lku if s.z_lku is not none else '' }}</td><td>{% if s.st_lku %}<span class="badge {{ s.st_lku|warna }}">{{ s.st_lku }}</span>{% endif %}</td></tr>
-    <tr><td>LiLA</td><td class="n">{{ s.lila or '—' }} cm</td><td>LiLA</td><td></td><td>{% if s.st_lila %}<span class="badge {{ s.st_lila|warna }}">{{ s.st_lila }}</span>{% endif %}</td></tr>
-  </table>
-  <p class="kecil redup">Acuan: Permenkes No. 2 Tahun 2020 (Standar Antropometri Anak); LiLA & LK: Buku Bagan SDIDTK 2022.</p>
+  <h2><span class="ikon-h">{{ ikon('gizi') }}</span>Status gizi</h2>
+  {% if s.status_gizi %}<div class="hasil-box {{ s.status_gizi|warna }}"><small>Status gizi utama</small><b class="big">{{ s.status_gizi }}</b></div>{% endif %}
+  {% macro ubin(judul, nilai, z, st) %}
+    <div class="ubin"><small>{{ judul }}</small><b>{{ nilai }}</b>
+      {% if st %}<span class="badge {{ st|warna }}">{{ st }}</span>{% else %}<span class="redup kecil">—</span>{% endif %}
+      {% if z is not none %}<small>z-score {{ '%+.2f'|format(z) }}</small>{% endif %}</div>
+  {% endmacro %}
+  <div class="ubin-grid">
+    {{ ubin('BB menurut umur (BB/U)', (s.bb ~ ' kg') if s.bb else '—', s.z_bbu, s.st_bbu) }}
+    {{ ubin(('PB' if s.cara_ukur=='terlentang' else 'TB') ~ ' menurut umur', (s.tb ~ ' cm') if s.tb else '—', s.z_tbu, s.st_tbu) }}
+    {{ ubin('BB menurut PB/TB', ((s.bb ~ ' / ' ~ s.tb) if s.bb and s.tb else '—'), s.z_bbtb, s.st_bbtb) }}
+    {{ ubin('IMT menurut umur', s.imt or '—', s.z_imtu, s.st_imtu) }}
+    {{ ubin('Lingkar kepala (LK/U)', (s.lk ~ ' cm') if s.lk else '—', s.z_lku, s.st_lku) }}
+    {{ ubin('Lingkar lengan (LiLA)', (s.lila ~ ' cm') if s.lila else '—', none, s.st_lila) }}
+  </div>
+  <p class="kecil redup" style="margin-bottom:0">Acuan: Permenkes No. 2 Tahun 2020; LiLA & LK: Buku Bagan SDIDTK 2022.</p>
 </div>
 </div>
 
 <div class="kartu reveal">
-  <h2>Tindak lanjut Puskesmas</h2>
+  <h2><span class="ikon-h">{{ ikon('tl') }}</span>Tindak lanjut Puskesmas</h2>
   {% if user.peran == 'puskesmas' %}
   <form method="post">
     <input type="hidden" name="_csrf" value="{{ csrf }}">

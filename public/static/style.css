@@ -270,3 +270,103 @@ body.keluar main{opacity:0;transform:translateY(-4px);transition:opacity .18s,tr
   .reveal{opacity:1;transform:none}.bar i{transform:scaleX(1)}
 }
 @media print{header.top,.noprint,.btn,.sticky-skor{display:none!important}body{background:#fff}.kartu{border:0;padding:0;box-shadow:none}.reveal{opacity:1;transform:none}}
+
+/* =====================================================================
+   RAPIKAN v2: filter, kartu statistik, grafik, tabel rata tengah
+   ===================================================================== */
+/* ---- filter ---- */
+.filter-kartu{padding:0;overflow:hidden}
+.filter-kepala{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--garis);background:#fafcfb}
+.filter-kepala b{font-size:15px}
+.filter-buka{display:none;margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--garis);background:#fff;color:var(--utama);cursor:pointer;place-items:center}
+.filter-buka svg{width:18px;height:18px;transition:transform .35s var(--ease)}
+.filter-isi{padding:18px 20px 16px}
+.filter-grid{display:grid;gap:14px 16px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.filter-grid label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--redup)}
+.filter-grid input,.filter-grid select{height:42px}
+.filter-aksi{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--garis)}
+.filter-aksi .btn{min-width:120px}
+@media (max-width:1100px){.filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){
+  .filter-grid{grid-template-columns:1fr}
+  .filter-buka{display:grid}
+  .filter-kartu .filter-isi{display:none}
+  .filter-kartu.terbuka .filter-isi{display:block;animation:muncul .35s var(--ease)}
+  .filter-kartu.terbuka .filter-buka svg{transform:rotate(90deg)}
+  .filter-aksi .btn{flex:1}
+}
+
+/* ---- kartu statistik: satu baris rapi ---- */
+.stat-grid{display:grid;gap:14px;grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:18px}
+.stat-grid .stat{display:flex;flex-direction:column;min-height:132px}
+.stat-grid .stat span{margin-top:auto;line-height:1.35}
+@media (max-width:1280px){.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:600px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat-grid .stat{min-height:112px}.stat-grid .stat:last-child{grid-column:1/-1}}
+
+/* ---- grafik: grid 2x2, tinggi seragam ---- */
+.grafik-grid{display:grid;gap:18px;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:18px;align-items:stretch}
+.grafik-grid .kartu{margin:0}
+.grafik-kartu{display:flex;flex-direction:column}
+.grafik-kepala{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.grafik-kepala h2{margin:0}
+.bar-list{display:flex;flex-direction:column;justify-content:center;flex:1;gap:2px}
+.bar-row{grid-template-columns:minmax(120px,190px) 1fr 70px;gap:14px;margin:7px 0}
+.bar-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bar-nilai{display:flex;align-items:baseline;justify-content:flex-end;gap:6px;font-variant-numeric:tabular-nums}
+.bar-nilai b{font-size:15px}.bar-nilai small{color:var(--redup);font-size:12px;min-width:34px;text-align:right}
+@media (max-width:900px){.grafik-grid{grid-template-columns:1fr}}
+@media (max-width:600px){.bar-row{grid-template-columns:110px 1fr 64px;gap:10px}}
+
+/* ---- tabel: semua teks rata tengah ---- */
+.tbl-wrap th,.tbl-wrap td,.kartu table th,.kartu table td{text-align:center;vertical-align:middle}
+.tbl-wrap td.n,.tbl-wrap th.n{text-align:center}
+.tbl-wrap .nama-anak,.kartu table .nama-anak{justify-content:center;text-align:left}
+.tbl-wrap td .aksi,.kartu table td .aksi,.kartu table td form.aksi{justify-content:center}
+.tbl-wrap td .bar{min-width:70px}
+/* kartu tabel di HP tetap rata kiri agar mudah dibaca */
+@media (max-width:600px){.tbl-hp td{text-align:left!important}.tbl-hp .nama-anak{justify-content:flex-start}}
+
+/* ---- rapikan umum ---- */
+.kepala{align-items:center}
+.kepala .btn{flex:0 0 auto}
+.kartu>h2:first-child{margin-bottom:16px}
+.gz>div{display:flex;flex-direction:column;gap:2px;min-height:76px;justify-content:center}
+.tbl-wrap table{min-width:640px}
+.tbl-hp{min-width:0!important}
+.segmen{position:relative;display:inline-flex;padding:4px;border-radius:12px;background:var(--abu-bg);gap:2px}
+.segmen label{margin:0;cursor:pointer}
+.segmen input{position:absolute;opacity:0;pointer-events:none}
+.segmen span{display:block;padding:7px 14px;border-radius:9px;font-size:13px;font-weight:600;color:var(--redup);transition:background .25s var(--ease),color .25s,box-shadow .25s}
+.segmen input:checked+span{background:#fff;color:var(--utama2);box-shadow:0 1px 3px rgba(16,40,34,.12)}
+.segmen input:focus-visible+span{outline:2px solid var(--utama)}
+@media (max-width:600px){.filter-aksi{flex-wrap:wrap}.segmen{width:100%}.segmen label{flex:1}.segmen span{text-align:center;padding:7px 8px}.filter-aksi>span[style]{display:none}}
+.sub-sel{display:block;font-size:12px;color:var(--redup);font-weight:500;margin-top:2px;white-space:nowrap}
+.tbl-wrap th{white-space:nowrap}
+.tbl-data td{white-space:nowrap}
+.tbl-data .nama-anak{justify-content:center;min-width:150px}
+.baris-link{cursor:pointer}
+.baris-link:hover td{background:#f2f9f6}
+/* ---- detail skrining ---- */
+.profil-kepala{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.profil-kepala .ava{width:52px;height:52px;font-size:20px}
+.profil-kepala h1{margin:0 0 2px}
+.info-grid{display:grid;gap:12px;grid-template-columns:repeat(5,minmax(0,1fr))}
+.info-grid>div{border:1px solid var(--garis);border-radius:12px;padding:12px 14px;background:#fbfdfc;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:74px}
+.info-grid small{color:var(--redup);font-size:12px}
+@media (max-width:1100px){.info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:600px){.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.info-grid>div:last-child{grid-column:1/-1}}
+.detail-grid{align-items:stretch;margin-bottom:18px}.detail-grid .kartu{margin:0}
+.ubin-grid{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0}
+.ubin{border:1px solid var(--garis);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:#fff;transition:transform .3s var(--ease),box-shadow .3s}
+.ubin:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.ubin>small:first-child{color:var(--redup);font-size:12px}.ubin>b{font-size:17px}.ubin>small:last-child{color:var(--redup);font-size:12px}
+.skor-titik{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:12px 0}
+.skor-titik span{aspect-ratio:1;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:800;animation:muncul .4s var(--ease) both}
+.skor-titik span.ya{background:var(--hijau-bg);color:var(--hijau)}.skor-titik span.tidak{background:var(--merah-bg);color:var(--merah)}
+.skor-titik span:nth-child(n){animation-delay:calc(var(--n,0)*40ms)}
+.tbl-jawaban td{padding:9px 8px}
+.tbl-jawaban .no-soal{width:34px;font-weight:800;color:var(--utama)}
+.catatan{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--aksen-soft)}
+.catatan p{margin:4px 0 0}
+@media (max-width:420px){.ubin-grid{grid-template-columns:1fr}}
+.info-grid.info-6{grid-template-columns:repeat(3,minmax(0,1fr))}@media (max-width:600px){.info-grid.info-6{grid-template-columns:repeat(2,minmax(0,1fr))}.info-grid.info-6>div:last-child{grid-column:auto}}

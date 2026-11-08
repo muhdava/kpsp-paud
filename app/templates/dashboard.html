@@ -7,22 +7,36 @@
 {% set lengkap = false %}{% include "_filter.html" %}
 
 {% macro bars(data, total) %}
-  {% for k, v in data %}<div class="bar-row"><span>{{ k }}</span><div class="bar"><i class="{{ k|warna }}" style="width:{{ (v / total * 100) if total else 0 }}%;transition-delay:{{ loop.index0 * 90 }}ms"></i></div><span class="n" style="text-align:right;font-weight:700">{{ v }}</span></div>{% endfor %}
+  <div class="bar-list">
+  {% for k, v in data %}{% set pct = (v / total * 100) if total else 0 %}
+    <div class="bar-row" title="{{ k }}: {{ v }} anak ({{ '%.0f'|format(pct) }}%)">
+      <span class="bar-label">{{ k }}</span>
+      <div class="bar"><i class="{{ k|warna }}" style="width:{{ pct }}%;transition-delay:{{ loop.index0 * 90 }}ms"></i></div>
+      <span class="bar-nilai"><b>{{ v }}</b><small>{{ '%.0f'|format(pct) }}%</small></span>
+    </div>
+  {% endfor %}
+  </div>
+{% endmacro %}
+{% macro kartu_grafik(judul, ikon_n, data) %}
+  <div class="kartu grafik-kartu">
+    <div class="grafik-kepala"><h2><span class="ikon-h">{{ ikon(ikon_n) }}</span>{{ judul }}</h2><span class="redup kecil">{{ total }} anak</span></div>
+    {{ bars(data, total) }}
+  </div>
 {% endmacro %}
 
-<div class="grid g4" style="margin-bottom:18px">
+<div class="stat-grid">
   <div class="stat reveal"><div class="si">{{ ikon('cek') }}</div><b data-hitung="{{ total }}">0</b><span>Anak terskrining</span></div>
   <div class="stat aksen reveal"><div class="si">{{ ikon('sekolah') }}</div><b data-hitung="{{ jml.anak }}">0</b><span>Anak terdaftar · {{ jml.paud }} PAUD/TK</span></div>
-  <div class="stat merah reveal"><div class="si">{{ ikon('awas') }}</div><b data-hitung="{{ kpsp[2][1] }}">0</b><span>KPSP penyimpangan</span></div>
   <div class="stat kuning reveal"><div class="si">{{ ikon('tanya') }}</div><b data-hitung="{{ kpsp[1][1] }}">0</b><span>KPSP meragukan</span></div>
+  <div class="stat merah reveal"><div class="si">{{ ikon('awas') }}</div><b data-hitung="{{ kpsp[2][1] }}">0</b><span>KPSP penyimpangan</span></div>
   <div class="stat merah reveal"><div class="si">{{ ikon('tl') }}</div><b data-hitung="{{ jml_prioritas }}">0</b><span>Perlu tindak lanjut</span></div>
 </div>
 
-<div class="grid g2">
-  <div class="kartu"><h2><span class="ikon-h">{{ ikon('grafik') }}</span>Hasil KPSP</h2>{{ bars(kpsp, total) }}</div>
-  <div class="kartu"><h2><span class="ikon-h">{{ ikon('gizi') }}</span>Status gizi (BB/TB · IMT/U)</h2>{{ bars(gz, total) }}</div>
-  <div class="kartu"><h2><span class="ikon-h">{{ ikon('ukur') }}</span>Tinggi badan menurut umur</h2>{{ bars(tbu, total) }}</div>
-  <div class="kartu"><h2><span class="ikon-h">{{ ikon('tl') }}</span>Status tindak lanjut</h2>{{ bars(tl, total) }}</div>
+<div class="grafik-grid">
+  {{ kartu_grafik('Hasil KPSP', 'grafik', kpsp) }}
+  {{ kartu_grafik('Status gizi (BB/TB · IMT/U)', 'gizi', gz) }}
+  {{ kartu_grafik('Tinggi badan menurut umur', 'ukur', tbu) }}
+  {{ kartu_grafik('Status tindak lanjut', 'tl', tl) }}
 </div>
 
 <div class="kartu reveal">

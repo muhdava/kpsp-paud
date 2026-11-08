@@ -1,14 +1,33 @@
-<form class="kartu filter noprint reveal" method="get">
-  <div><label>Kelurahan</label><select name="kelurahan"><option value="">Semua</option>{% for k in opsi_kel %}<option value="{{ k.id }}" {{ 'selected' if args.kelurahan==k.id|string }}>{{ k.nama }}</option>{% endfor %}</select></div>
-  <div><label>PAUD / TK</label><select name="paud"><option value="">Semua</option>{% for p in opsi_paud %}<option value="{{ p.id }}" {{ 'selected' if args.paud==p.id|string }}>{{ p.nama }} ({{ p.kel }})</option>{% endfor %}</select></div>
-  <div><label>Periksa dari</label><input type="date" name="dari" value="{{ args.dari }}"></div>
-  <div><label>Sampai</label><input type="date" name="sampai" value="{{ args.sampai }}"></div>
-  {% if lengkap %}
-  <div><label>Hasil KPSP</label><select name="kpsp"><option value="">Semua</option>{% for k in ['Sesuai umur','Meragukan','Penyimpangan'] %}<option {{ 'selected' if args.kpsp==k }}>{{ k }}</option>{% endfor %}</select></div>
-  <div><label>Status gizi</label><select name="gizi"><option value="">Semua</option>{% for k in ['Gizi buruk','Gizi kurang','Gizi baik','Berisiko gizi lebih','Gizi lebih','Obesitas'] %}<option {{ 'selected' if args.gizi==k }}>{{ k }}</option>{% endfor %}</select></div>
-  <div><label>Tindak lanjut</label><select name="tl"><option value="">Semua</option>{% for k in TINDAK_LANJUT %}<option {{ 'selected' if args.tl==k }}>{{ k }}</option>{% endfor %}</select></div>
-  <div><label>Nama anak</label><input name="cari" value="{{ args.cari }}"></div>
-  {% endif %}
-  <div><label>Data</label><select name="terakhir"><option value="1">Skrining terakhir per anak</option><option value="0" {{ 'selected' if args.terakhir=='0' }}>Semua skrining</option></select></div>
-  <div class="aksi"><button class="btn">Terapkan</button><a href="{{ request.path }}" class="btn alt">Reset</a></div>
+{% from "_ikon.html" import ikon %}
+{% set aktif_f = [args.kelurahan, args.paud, args.dari, args.sampai, args.kpsp, args.gizi, args.tl, args.cari]|select|list|length %}
+<form class="kartu filter-kartu noprint reveal" method="get">
+  <div class="filter-kepala">
+    <span class="ikon-h">{{ ikon('cari') }}</span>
+    <b>Filter data</b>
+    {% if aktif_f %}<span class="badge hijau">{{ aktif_f }} aktif</span>{% endif %}
+    <button type="button" class="filter-buka" aria-label="Tampilkan filter" onclick="this.closest('form').classList.toggle('terbuka')">{{ ikon('panel') }}</button>
+  </div>
+  <div class="filter-isi">
+    <div class="filter-grid">
+      <div><label>Kelurahan</label><select name="kelurahan"><option value="">Semua kelurahan</option>{% for k in opsi_kel %}<option value="{{ k.id }}" {{ 'selected' if args.kelurahan==k.id|string }}>{{ k.nama }}</option>{% endfor %}</select></div>
+      <div><label>PAUD / TK</label><select name="paud"><option value="">Semua PAUD/TK</option>{% for p in opsi_paud %}<option value="{{ p.id }}" {{ 'selected' if args.paud==p.id|string }}>{{ p.nama }} ({{ p.kel }})</option>{% endfor %}</select></div>
+      <div><label>Periksa dari</label><input type="date" name="dari" value="{{ args.dari }}"></div>
+      <div><label>Sampai</label><input type="date" name="sampai" value="{{ args.sampai }}"></div>
+      {% if lengkap %}
+      <div><label>Hasil KPSP</label><select name="kpsp"><option value="">Semua hasil</option>{% for k in ['Sesuai umur','Meragukan','Penyimpangan'] %}<option {{ 'selected' if args.kpsp==k }}>{{ k }}</option>{% endfor %}</select></div>
+      <div><label>Status gizi</label><select name="gizi"><option value="">Semua status</option>{% for k in ['Gizi buruk','Gizi kurang','Gizi baik','Berisiko gizi lebih','Gizi lebih','Obesitas'] %}<option {{ 'selected' if args.gizi==k }}>{{ k }}</option>{% endfor %}</select></div>
+      <div><label>Tindak lanjut</label><select name="tl"><option value="">Semua</option>{% for k in TINDAK_LANJUT %}<option {{ 'selected' if args.tl==k }}>{{ k }}</option>{% endfor %}</select></div>
+      <div><label>Nama anak</label><input name="cari" value="{{ args.cari }}" placeholder="Ketik nama…"></div>
+      {% endif %}
+    </div>
+    <div class="filter-aksi">
+      <div class="segmen" role="radiogroup" aria-label="Data yang ditampilkan">
+        <label><input type="radio" name="terakhir" value="1" {{ 'checked' if args.terakhir!='0' }}><span>Terakhir per anak</span></label>
+        <label><input type="radio" name="terakhir" value="0" {{ 'checked' if args.terakhir=='0' }}><span>Semua riwayat</span></label>
+      </div>
+      <span style="flex:1"></span>
+      {% if aktif_f or args.terakhir=='0' %}<a href="{{ request.path }}" class="btn alt kecil">Reset</a>{% endif %}
+      <button class="btn kecil">{{ ikon('cari') }} Terapkan filter</button>
+    </div>
+  </div>
 </form>

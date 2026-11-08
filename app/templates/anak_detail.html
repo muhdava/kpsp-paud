@@ -6,7 +6,7 @@
     <a class="btn" href="{{ url_for('skrining_baru', aid=a.id) }}">+ Skrining baru</a></div>{% endif %}
 </div>
 <div class="kartu reveal">
-  <div class="gz">
+  <div class="info-grid info-6">
     <div><small>Jenis kelamin</small><b>{{ 'Laki-laki' if a.jk=='L' else 'Perempuan' }}</b></div>
     <div><small>Tanggal lahir</small><b>{{ a.tgl_lahir|tgl }}</b></div>
     <div><small>Umur hari ini</small><b>{{ umur.teks }}</b></div>
