@@ -83,6 +83,14 @@ class _PathAsliVercel:
 app.wsgi_app = _PathAsliVercel(app.wsgi_app)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or (secrets.token_hex(32) if DI_VERCEL else _secret_key())
 app.config["SESSION_COOKIE_SECURE"] = DI_VERCEL
+
+
+@app.after_request
+def _cache_statis(resp):
+    if request.path.startswith("/static/") and resp.status_code == 200:
+        # browser 7 hari, CDN Vercel 1 tahun (CSS/JS memakai ?v= sehingga perubahan tetap terambil)
+        resp.headers["Cache-Control"] = "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400"
+    return resp
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -120,22 +128,50 @@ TINDAK_LANJUT = ["Belum ditindaklanjuti", "Edukasi / stimulasi", "Evaluasi ulang
 
 
 # ---------------------------------------------------------------- db
+import threading
+
+_LOKAL = threading.local()  # koneksi Postgres per-thread, dipakai ulang selama fungsi masih "hangat"
+
+
+def _pg(baru=False):
+    con = getattr(_LOKAL, "con", None)
+    if baru or con is None or con.closed or con.broken:
+        if con is not None and not con.closed:
+            try:
+                con.close()
+            except Exception:
+                pass
+        con = psycopg.connect(DATABASE_URL, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
+        _LOKAL.con = con
+    return con
+
+
 class Koneksi:
     """Pembungkus tipis agar kode yang sama jalan di SQLite (lokal) dan Postgres (Supabase)."""
 
     def __init__(self):
         if PAKAI_PG:
-            self.con = psycopg.connect(DATABASE_URL, row_factory=dict_row, prepare_threshold=None,
-                                       connect_timeout=10)
+            self.con = _pg()
         else:
             self.con = sqlite3.connect(DB_PATH)
             self.con.row_factory = lambda c, r: {d[0]: v for d, v in zip(c.description, r)}
             self.con.execute("PRAGMA foreign_keys = ON")
+        self.pertama = True
 
     def execute(self, sql, args=()):
-        if PAKAI_PG:
-            sql = sql.replace("?", "%s")
-        return self.con.execute(sql, args)
+        if not PAKAI_PG:
+            return self.con.execute(sql, args)
+        sql = sql.replace("?", "%s")
+        try:
+            cur = self.con.execute(sql, args)
+        except psycopg.OperationalError:
+            if not self.pertama:
+                raise
+            # koneksi lama sudah putus (fungsi lama tidak aktif) -> sambung ulang sekali
+            self.con = _pg(baru=True)
+            cur = self.con.execute(sql, args)
+        self.pertama = False
+        return cur
 
     def sisip(self, sql, args=()):
         """INSERT dan kembalikan id baris baru."""
@@ -145,7 +181,13 @@ class Koneksi:
         self.con.commit()
 
     def close(self):
-        self.con.close()
+        if PAKAI_PG:
+            try:
+                self.con.rollback()  # akhiri transaksi, koneksi tetap dipakai ulang
+            except Exception:
+                _LOKAL.con = None
+        else:
+            self.con.close()
 
 
 def db():

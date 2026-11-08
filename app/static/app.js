@@ -56,7 +56,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('click',e=>{
   const a=e.target.closest('a[href]');if(!a||kurangGerak||e.ctrlKey||e.metaKey||e.shiftKey||a.target||a.hasAttribute('download'))return;
   const u=new URL(a.href,location.href);if(u.origin!==location.origin||u.pathname===location.pathname&&u.hash||u.searchParams.get('format'))return;
-  e.preventDefault();document.body.classList.add('keluar');setTimeout(()=>location.href=a.href,160);
+  e.preventDefault();document.body.classList.add('keluar');setTimeout(()=>location.href=a.href,90);
 });
 addEventListener('pageshow',()=>document.body.classList.remove('keluar'));
 
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(a.classList.contains('on')&&a.href===location.href)return;
     menus.forEach(mm=>{const t=mm.el.querySelector(`[data-nav="${a.dataset.nav}"]`);mm.el.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('on',x===t));if(t)geser(mm,t)});
     simpan('navDari',a.dataset.nav);
-    setTimeout(()=>{document.body.classList.add('keluar');setTimeout(()=>location.href=a.href,140)},kurangGerak?0:260);
+    setTimeout(()=>{location.href=a.href},kurangGerak?0:170);
   }));
   // pindah halaman lewat tautan lain: simpan menu aktif sekarang
   addEventListener('pagehide',()=>{const m=menus[0]||menus[1];const a=m&&aktif(m);if(a)simpan('navDari',a.dataset.nav)});
@@ -130,4 +130,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   else addEventListener('resize',()=>menus.forEach(m=>geser(m,aktif(m),true)));
   // bila font selesai dimuat, ukuran bisa berubah
   if(document.fonts)document.fonts.ready.then(()=>menus.forEach(m=>geser(m,aktif(m),true)));
+})();
+
+/* ---------- Prefetch: muat halaman lebih dulu saat link disentuh/di-hover ---------- */
+(function(){
+  const sudah=new Set();
+  function pre(a){
+    if(!a||!a.href||sudah.has(a.href))return;const u=new URL(a.href,location.href);
+    if(u.origin!==location.origin||u.pathname==='/logout'||u.searchParams.get('format'))return;
+    sudah.add(a.href);const l=document.createElement('link');l.rel='prefetch';l.href=a.href;document.head.appendChild(l);
+  }
+  document.addEventListener('pointerover',e=>pre(e.target.closest&&e.target.closest('a[href]')),{passive:true});
+  document.addEventListener('touchstart',e=>pre(e.target.closest&&e.target.closest('a[href]')),{passive:true});
 })();
