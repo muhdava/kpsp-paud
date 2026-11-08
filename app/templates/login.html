@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block title %}Masuk · Monitoring KPSP{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-hero">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <h2>Pantau tumbuh kembang anak PAUD, bersama.</h2>
+    <p>Guru mencatat skrining KPSP & antropometri, Puskesmas memantau dan menindaklanjuti.</p>
+    <ul>
+      <li><span>{{ ikon('cek') }}</span>KPSP otomatis sesuai umur anak</li>
+      <li><span>{{ ikon('gizi') }}</span>Status gizi sesuai Permenkes 2/2020</li>
+      <li><span>{{ ikon('grafik') }}</span>Rekap per kelurahan & PAUD</li>
+    </ul>
+  </div>
+  <div class="auth-form">
+    <h1>Selamat datang</h1>
+    <p class="redup" style="margin:0 0 22px">Masuk untuk melanjutkan.</p>
+    <form method="post">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field"><label for="u">Username</label><input id="u" name="username" required autofocus autocomplete="username"></div>
+      <div class="field" style="margin-bottom:20px"><label for="p">Password</label>
+        <div class="pw"><input id="p" name="password" type="password" required autocomplete="current-password"><button type="button" data-lihat="p" aria-label="Tampilkan password">{{ ikon('mata') }}</button></div></div>
+      <button class="btn" style="width:100%;padding:12px">Masuk</button>
+    </form>
+    <p class="kecil redup" style="margin-top:20px">Guru PAUD/TK belum punya akun? <a href="{{ url_for('daftar') }}"><b>Daftar di sini</b></a>. Akun aktif setelah disetujui petugas Puskesmas.</p>
+  </div>
+</div>
+{% endblock %}

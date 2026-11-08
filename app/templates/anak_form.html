@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block body %}
+<h1>{{ 'Ubah data anak' if a else 'Tambah anak' }}</h1>
+<div class="kartu reveal" style="max-width:640px">
+  <p class="redup kecil">PAUD/TK: <b>{{ user.paud_nama }}</b> · Kelurahan <b>{{ user.kelurahan_nama }}</b></p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div style="margin-bottom:12px"><label>Nama anak</label><input name="nama" required value="{{ request.form.nama or (a.nama if a) }}"></div>
+    <div class="form-row">
+      <div><label>Jenis kelamin</label>
+        {% set jk = request.form.jk or (a.jk if a) %}
+        <select name="jk" required><option value="">— pilih —</option>
+          <option value="L" {{ 'selected' if jk=='L' }}>Laki-laki</option><option value="P" {{ 'selected' if jk=='P' }}>Perempuan</option></select></div>
+      <div><label>Tanggal lahir</label><input type="date" name="tgl_lahir" id="tgl_lahir" required max="{{ '' }}" value="{{ request.form.tgl_lahir or (a.tgl_lahir if a) }}"></div>
+    </div>
+    <p id="umur" class="redup kecil" style="margin-top:-4px"></p>
+    <div style="margin-bottom:16px"><label>Nama orang tua / wali (opsional)</label><input name="nama_ortu" value="{{ request.form.nama_ortu or (a.nama_ortu if a) or '' }}"></div>
+    <div class="aksi"><button class="btn">{{ 'Simpan' if a else 'Simpan & lanjut skrining' }}</button>
+      <a class="btn alt" href="{{ url_for('anak_detail', aid=a.id) if a else url_for('guru') }}">Batal</a></div>
+  </form>
+  {% if a %}
+  <form method="post" action="{{ url_for('anak_hapus', aid=a.id) }}" onsubmit="return confirm('Hapus data anak ini beserta seluruh riwayat skriningnya? Tindakan ini tidak bisa dibatalkan.')" style="margin-top:20px">
+    <input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn bahaya kecil">Hapus anak</button></form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block script %}<script>
+const t=document.getElementById('tgl_lahir'),o=document.getElementById('umur');
+t.max=new Date().toISOString().slice(0,10);
+async function u(){if(!t.value){o.textContent='';return}
+ const r=await fetch('{{ url_for("api_hitung") }}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tgl_lahir:t.value,tgl_periksa:new Date().toISOString().slice(0,10)})});
+ const d=await r.json();o.textContent=d.error?d.error:`Umur hari ini: ${d.umur.teks} (dibulatkan ${d.umur.bulan_bulat} bulan) → KPSP ${d.kpsp_umur?d.kpsp_umur+' bulan':'belum tersedia'}`}
+t.onchange=u;u();
+</script>{% endblock %}

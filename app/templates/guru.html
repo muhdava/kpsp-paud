@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block body %}
+<div class="kepala">
+  <div><h1>Data anak</h1><div class="redup kecil">{{ user.paud_nama }} · Kelurahan {{ user.kelurahan_nama }}</div></div>
+  <a class="btn" href="{{ url_for('anak_form') }}">{{ ikon('plus') }} Tambah anak</a>
+</div>
+{% set sudah = anak|selectattr('sid')|list %}
+<div class="grid g4" style="margin-bottom:18px">
+  <div class="stat reveal"><div class="si">{{ ikon('grup') }}</div><b data-hitung="{{ anak|length }}">{{ anak|length }}</b><span>Anak terdaftar</span></div>
+  <div class="stat reveal"><div class="si">{{ ikon('cek') }}</div><b data-hitung="{{ sudah|length }}">{{ sudah|length }}</b><span>Sudah diskrining</span></div>
+  <div class="stat kuning reveal"><div class="si">{{ ikon('tanya') }}</div><b data-hitung="{{ anak|selectattr('hasil_kpsp','equalto','Meragukan')|list|length }}">0</b><span>KPSP meragukan</span></div>
+  <div class="stat merah reveal"><div class="si">{{ ikon('awas') }}</div><b data-hitung="{{ anak|selectattr('hasil_kpsp','equalto','Penyimpangan')|list|length }}">0</b><span>KPSP penyimpangan</span></div>
+</div>
+<div class="kartu reveal">
+  {% if not anak %}
+    <div class="kosong">{{ ikon('kosong') }}<h3>Belum ada data anak</h3><p>Tambahkan anak pertama untuk mulai skrining KPSP.</p>
+      <a class="btn" href="{{ url_for('anak_form') }}">{{ ikon('plus') }} Tambah anak</a></div>
+  {% else %}
+  <div class="cari">{{ ikon('cari') }}<input id="cari" placeholder="Cari nama anak…"></div>
+  <div class="tbl-wrap"><table id="tbl" class="tbl-hp">
+    <thead><tr><th>Nama anak</th><th>Umur hari ini</th><th>Skrining terakhir</th><th>KPSP</th><th>Status gizi</th><th>Tindak lanjut Puskesmas</th><th></th></tr></thead>
+    <tbody>
+    {% for a in anak %}
+      <tr>
+        <td><a class="nama-anak" href="{{ url_for('anak_detail', aid=a.id) }}"><span class="ava {{ a.jk }}">{{ a.nama[:1]|upper }}</span>{{ a.nama }}</a></td>
+        <td data-label="Umur">{{ a.umur }}<br><span class="kecil redup">Form KPSP {{ a.kpsp_sekarang ~ ' bln' if a.kpsp_sekarang else '—' }}</span></td>
+        <td data-label="Skrining terakhir">{{ a.tgl_periksa|tgl if a.sid else '—' }}</td>
+        <td data-label="KPSP">{% if a.hasil_kpsp %}<span class="badge {{ a.hasil_kpsp|warna }}">{{ a.hasil_kpsp }} · {{ a.skor }}</span>{% else %}<span class="badge abu">Belum</span>{% endif %}</td>
+        <td data-label="Status gizi">{% if a.status_gizi %}<span class="badge {{ a.status_gizi|warna }}">{{ a.status_gizi }}</span>{% else %}—{% endif %}</td>
+        <td data-label="Tindak lanjut">{% if a.sid %}<span class="badge {{ a.tindak_lanjut|warna }}">{{ a.tindak_lanjut }}</span>{% if a.catatan_puskesmas %}<br><span class="kecil redup">{{ a.catatan_puskesmas }}</span>{% endif %}{% endif %}</td>
+        <td class="td-aksi"><a class="btn kecil" href="{{ url_for('skrining_baru', aid=a.id) }}">Skrining</a></td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block script %}<script>
+const c=document.getElementById('cari');if(c)c.oninput=()=>{const v=c.value.toLowerCase();document.querySelectorAll('#tbl tbody tr').forEach(r=>r.style.display=r.cells[0].textContent.toLowerCase().includes(v)?'':'none')};
+</script>{% endblock %}

@@ -1,0 +1,111 @@
+/* =====================================================================
+   NAVIGASI: sidebar kiri (desktop) + bottom nav ala TikTok (HP/tablet)
+   ===================================================================== */
+:root{--sb-lebar:256px;--sb-kecil:76px;--bn-tinggi:68px}
+.tanpa-anim *,.tanpa-anim *::before,.tanpa-anim *::after{transition:none!important}
+body.ada-nav{min-height:100vh}
+body.ada-nav .konten{margin-left:var(--sb-lebar);transition:margin-left .45s var(--ease)}
+.sb-tutup body.ada-nav .konten{margin-left:var(--sb-kecil)}
+body.ada-nav main{padding-top:30px}
+
+/* ---------- Sidebar ---------- */
+.sidebar{position:fixed;inset:0 auto 0 0;z-index:60;width:var(--sb-lebar);display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#0a6d5d 0%,#0d8a76 55%,#109a83 100%);color:#fff;padding:16px 12px;
+  box-shadow:6px 0 30px -18px rgba(8,60,52,.7);transition:width .45s var(--ease)}
+.sb-tutup .sidebar{width:var(--sb-kecil)}
+.sidebar::before{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.06);left:-40px;bottom:-80px;pointer-events:none}
+.sb-atas{position:relative;display:flex;align-items:center;gap:8px;margin:2px 0 22px;min-height:44px}
+.sb-brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none!important;min-width:0;flex:1;overflow:hidden}
+.sb-brand b{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.sb-brand small{display:block;font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar .logo{width:40px;height:40px;margin-left:6px}
+.sb-teks{white-space:nowrap;min-width:0;transition:opacity .3s var(--ease) .12s,transform .45s var(--ease) .05s}
+.sb-tutup .sidebar .sb-teks{opacity:0;transform:translateX(-12px);pointer-events:none;transition:opacity .15s,transform .3s var(--ease)}
+.sb-toggle{position:absolute;right:0;top:5px;width:34px;height:34px;border-radius:10px;border:0;cursor:pointer;color:#fff;background:rgba(255,255,255,.12);
+  display:grid;place-items:center;transition:background .2s,right .45s var(--ease),top .45s var(--ease)}
+.sb-toggle:hover{background:rgba(255,255,255,.24)}
+.sb-toggle svg{width:18px;height:18px;transform:scaleX(-1);transition:transform .45s var(--ease)}
+.sb-tutup .sb-toggle{right:9px;top:58px}
+.sb-tutup .sb-toggle svg{transform:none}
+.sb-menu{position:relative;display:flex;flex-direction:column;gap:4px;transition:margin-top .45s var(--ease)}
+.sb-tutup .sb-menu{margin-top:46px}
+.sb-item{position:relative;z-index:1;display:flex;align-items:center;gap:14px;height:46px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.84);
+  font-weight:600;font-size:14.5px;text-decoration:none!important;transition:color .3s,background .25s}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.09)}
+.sb-item.on,.sb-item.on:hover{color:var(--utama2);background:transparent}
+.sb-ikon{width:24px;height:24px;flex:0 0 auto;display:grid;place-items:center;transition:transform .4s var(--ease-pop)}
+.sb-ikon svg{width:21px;height:21px}
+.sb-item:hover .sb-ikon{transform:scale(1.14) rotate(-4deg)}
+/* indikator geser */
+.sb-indikator{position:absolute;left:0;right:0;top:0;height:46px;border-radius:12px;background:#fff;z-index:0;opacity:0;
+  box-shadow:0 10px 22px -12px rgba(0,0,0,.5);transition:transform .55s var(--ease),opacity .25s}
+.sb-indikator::before{content:"";position:absolute;left:-12px;top:11px;bottom:11px;width:4px;border-radius:0 4px 4px 0;background:var(--aksen)}
+.sb-indikator.siap{opacity:1}
+.sb-bawah{margin-top:auto;display:grid;gap:6px;border-top:1px solid rgba(255,255,255,.14);padding-top:12px}
+.sb-user{display:flex;align-items:center;gap:11px;padding:6px 6px 6px 7px;min-height:46px;overflow:hidden}
+.sb-user .avatar{width:34px;height:34px;font-size:14px;margin:0;flex:0 0 auto}
+.sb-user b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.sb-user small{display:block;font-size:12px;opacity:.75;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.sb-item.keluar:hover{background:rgba(255,130,110,.22)}
+/* tooltip saat menu tertutup */
+.sb-item::after{content:attr(data-tip);position:absolute;left:calc(100% + 16px);top:50%;transform:translate(-6px,-50%);opacity:0;pointer-events:none;
+  background:#13231f;color:#fff;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap;visibility:hidden;
+  transition:opacity .2s,transform .25s var(--ease)}
+.sb-tutup .sb-item::after{visibility:visible}
+.sb-tutup .sb-item:hover::after{opacity:1;transform:translate(0,-50%)}
+
+/* ---------- topbar & bottom nav (HP / tablet) ---------- */
+.topbar,.bottomnav{display:none}
+@media (max-width:1023px){
+  .sidebar{display:none}
+  body.ada-nav .konten,.sb-tutup body.ada-nav .konten{margin-left:0}
+  body.ada-nav main{padding-top:18px;padding-bottom:calc(var(--bn-tinggi) + 40px + env(safe-area-inset-bottom))}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;padding:10px 16px;color:#fff;
+    background:linear-gradient(120deg,#0b7a69,#0d8a76 50%,#14a189);box-shadow:0 6px 20px -12px rgba(10,80,68,.6)}
+  .topbar .logo{width:36px;height:36px}
+  .topbar-keluar{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;background:rgba(255,255,255,.14);flex:0 0 auto;transition:background .2s,transform .2s}
+  .topbar-keluar:active{transform:scale(.9)}
+  .topbar-keluar svg{width:19px;height:19px}
+
+  .bottomnav{display:flex;align-items:stretch;position:fixed;left:0;right:0;bottom:0;z-index:70;height:calc(var(--bn-tinggi) + env(safe-area-inset-bottom));
+    padding:0 6px env(safe-area-inset-bottom);background:rgba(255,255,255,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--garis);box-shadow:0 -8px 30px -18px rgba(16,40,34,.35)}
+  html:not(.sudah-masuk) .bottomnav{animation:bnMasuk .6s var(--ease) both}
+  @keyframes bnMasuk{from{transform:translateY(100%)}to{transform:none}}
+  .bn-item{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#7b8a85;
+    text-decoration:none!important;font-size:11px;font-weight:700;-webkit-tap-highlight-color:transparent;transition:color .35s}
+  .bn-ikon{width:26px;height:26px;display:grid;place-items:center;transition:transform .5s var(--ease-pop)}
+  .bn-ikon svg{width:23px;height:23px}
+  .bn-item.on{color:var(--utama)}
+  .bn-item.on .bn-ikon{transform:translateY(-2px) scale(1.14)}
+  .bn-item.on .bn-ikon svg{stroke-width:2.4}
+  .bn-item:active .bn-ikon{transform:scale(.82)}
+  /* indikator: garis atas + latar lembut, bergeser antar menu */
+  .bn-indikator{position:absolute;top:0;left:0;width:64px;height:100%;pointer-events:none;opacity:0;transition:transform .55s var(--ease),opacity .25s}
+  .bn-indikator.siap{opacity:1}
+  .bn-indikator::before{content:"";position:absolute;top:-1px;left:50%;width:30px;height:3px;border-radius:0 0 4px 4px;transform:translateX(-50%);background:var(--utama)}
+  .bn-indikator::after{content:"";position:absolute;top:7px;left:50%;width:50px;height:48px;border-radius:16px;transform:translateX(-50%);background:var(--utama-soft)}
+  .bn-indikator{z-index:0}
+  /* tombol + di tengah ala TikTok */
+  .bn-plus{flex:0 0 auto;padding:0 16px;justify-content:center}
+  .plus-btn{position:relative;isolation:isolate;width:50px;height:34px;display:grid;place-items:center;border-radius:11px;color:#fff;transition:transform .4s var(--ease-pop)}
+  .plus-btn::before,.plus-btn::after{content:"";position:absolute;inset:0;border-radius:11px;z-index:-2;transition:transform .35s var(--ease)}
+  .plus-btn::before{background:#ffc94d;transform:translateX(-4px)}
+  .plus-btn::after{background:var(--aksen);transform:translateX(4px)}
+  .plus-btn svg{width:22px;height:22px;stroke-width:2.8;position:relative;z-index:1}
+  .plus-btn i{position:absolute;inset:0;border-radius:11px;background:linear-gradient(135deg,#14a189,#0b7a69);z-index:-1}
+  .bn-plus:hover .plus-btn::before{transform:translateX(-6px)}.bn-plus:hover .plus-btn::after{transform:translateX(6px)}
+  .bn-plus:active .plus-btn{transform:scale(.86)}
+  .bn-plus.on .plus-btn{transform:rotate(90deg) scale(1.04)}
+  .sticky-skor{bottom:calc(var(--bn-tinggi) + 10px + env(safe-area-inset-bottom))}
+}
+/* tablet: bottom nav mengambang */
+@media (min-width:600px) and (max-width:1023px){
+  .bottomnav{left:50%;right:auto;width:min(520px,calc(100% - 32px));bottom:16px;border-radius:24px;border:1px solid var(--garis);
+    height:var(--bn-tinggi);padding:0 8px;transform:translateX(-50%);box-shadow:0 18px 40px -16px rgba(16,40,34,.35)}
+  html:not(.sudah-masuk) .bottomnav{animation:bnMasukTab .6s var(--ease) both}
+  @keyframes bnMasukTab{from{transform:translate(-50%,140%)}to{transform:translate(-50%,0)}}
+  .sticky-skor{bottom:calc(var(--bn-tinggi) + 28px)}
+}
+@media (prefers-reduced-motion:reduce){.sb-indikator,.bn-indikator{transition:none}}
+@media print{.sidebar,.topbar,.bottomnav{display:none!important}body.ada-nav .konten{margin-left:0!important}}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block body %}
+<div class="kepala">
+  <div><h1>Skrining · {{ a.nama }}</h1>
+  <div class="redup kecil">{{ 'Laki-laki' if a.jk=='L' else 'Perempuan' }} · lahir {{ a.tgl_lahir|tgl }} · {{ a.paud_nama }}</div></div>
+  <a class="btn alt kecil" href="{{ url_for('anak_detail', aid=a.id) }}">Batal</a>
+</div>
+<form method="post" id="f">
+<input type="hidden" name="_csrf" value="{{ csrf }}">
+<div class="kartu reveal">
+  <h2><span class="langkah">1</span>Tanggal pemeriksaan & umur</h2>
+  <div class="form-row" style="align-items:end">
+    <div><label>Tanggal periksa</label><input type="date" name="tgl_periksa" id="tgl_periksa" value="{{ hari_ini }}" max="{{ hari_ini }}" required></div>
+    <div><label>Umur anak</label><div id="umur" class="chip-umur">{{ ikon('kalender') }}<span class="loading-dots">Menghitung</span></div></div>
+  </div>
+  <p id="kpsp-info" class="kecil redup" style="margin:0"></p>
+</div>
+
+<div class="kartu reveal">
+  <h2><span class="langkah">2</span>Pengukuran antropometri</h2>
+  <div class="form-row">
+    <div><label>Berat badan</label><div class="input-unit"><input name="bb" inputmode="decimal" placeholder="14,5"><em>kg</em></div></div>
+    <div><label>Panjang / tinggi badan</label><div class="input-unit"><input name="tb" inputmode="decimal" placeholder="96,2"><em>cm</em></div></div>
+    <div><label>Cara ukur</label><select name="cara_ukur"><option value="berdiri">Berdiri (tinggi badan)</option><option value="terlentang">Terlentang (panjang badan)</option></select></div>
+    <div><label>Lingkar kepala</label><div class="input-unit"><input name="lk" inputmode="decimal" placeholder="49"><em>cm</em></div></div>
+    <div><label>Lingkar lengan atas (LiLA)</label><div class="input-unit"><input name="lila" inputmode="decimal" placeholder="15"><em>cm</em></div></div>
+  </div>
+  <div id="gizi"></div>
+  <p class="kecil redup" style="margin-bottom:0">Status gizi dihitung otomatis dengan z-score sesuai Permenkes No. 2 Tahun 2020 (BB/U, PB/U–TB/U, BB/PB–BB/TB, IMT/U). LiLA (6–59 bln) dan lingkar kepala mengikuti Buku Bagan SDIDTK.</p>
+</div>
+
+<div class="kartu reveal" id="kpsp-kartu">
+  <h2><span class="langkah">3</span>KPSP <span id="kpsp-judul" class="redup" style="font-weight:600"></span></h2>
+  <div id="kpsp-soal"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  <div style="margin-top:14px"><label>Catatan guru (opsional)</label><textarea name="catatan_guru" rows="2" placeholder="mis. anak sedang kurang sehat saat diperiksa"></textarea></div>
+  <div class="sticky-skor">
+    <div class="cincin" id="cincin"><span id="cincin-n">0</span></div>
+    <div class="progres"><div id="skor" class="kecil"><b>0</b> dari 10 pertanyaan terjawab</div><div class="track"><i id="track"></i></div></div>
+    <button class="btn" id="simpan">{{ ikon('cek') }} Simpan hasil</button>
+  </div>
+</div>
+</form>
+{% endblock %}
+{% block script %}
+<script>
+const ANAK={tgl_lahir:'{{ a.tgl_lahir }}',jk:'{{ a.jk }}'};
+const f=document.getElementById('f');let umurKpsp=undefined,giziTerakhir='';
+async function hitung(){
+  const fd=new FormData(f),d={...ANAK};['tgl_periksa','bb','tb','cara_ukur','lk','lila'].forEach(k=>d[k]=fd.get(k));
+  const r=await fetch('{{ url_for("api_hitung") }}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const h=await r.json();const um=document.getElementById('umur');
+  if(h.error){um.lastChild.textContent=h.error;return}
+  um.innerHTML=um.querySelector('svg').outerHTML+`<span>${h.umur.teks} · dibulatkan <b>${h.umur.bulan_bulat} bln</b></span>`;
+  document.getElementById('kpsp-info').textContent=h.kpsp_info||(h.kpsp_umur?`Menggunakan KPSP ${h.kpsp_umur} bulan (bila umur tidak pas, dipakai kelompok umur lebih muda).`:'');
+  const html=renderGizi(h.gizi);
+  if(html!==giziTerakhir){giziTerakhir=html;document.getElementById('gizi').innerHTML=html}
+  if(h.kpsp_umur!==umurKpsp){umurKpsp=h.kpsp_umur;muatKpsp()}
+}
+async function muatKpsp(){
+  const box=document.getElementById('kpsp-soal');
+  document.getElementById('kpsp-judul').textContent=umurKpsp?`· umur ${umurKpsp} bulan`:'';
+  if(!umurKpsp){box.innerHTML='<div class="kosong"><p>Tidak ada KPSP untuk umur ini. Data antropometri tetap dapat disimpan.</p></div>';skor();return}
+  box.innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+  const k=await (await fetch('{{ url_for("api_kpsp", umur=0) }}'.replace(/0$/,umurKpsp))).json();
+  let html=k.hal.map(p=>`<details class="gambar"><summary>Lihat gambar petunjuk · Buku Bagan SDIDTK hal. PDF ${p}</summary><img loading="lazy" src="{{ url_for('static', filename='kpsp/') }}hal_${p}.png" alt="Halaman ${p}"></details>`).join('');
+  k.soal.forEach((s,i)=>{const n=i+1;html+=`<div class="soal reveal" style="--i:${i}" id="soal${n}"><span class="no">${n}</span>${esc(s[0])}<br><span class="dom">${esc(s[1])}</span>
+    <div class="yt"><label><input type="radio" name="q${n}" value="Y" required> Ya</label><label><input type="radio" name="q${n}" value="T"> Tidak</label></div></div>`});
+  box.innerHTML=html;amatiReveal(box);skor();
+}
+function skor(){
+  const y=f.querySelectorAll('input[type=radio][value=Y]:checked').length,dij=f.querySelectorAll('input[type=radio]:checked').length;
+  const el=document.getElementById('skor'),c=document.getElementById('cincin'),tr=document.getElementById('track');
+  if(!umurKpsp){el.innerHTML='KPSP tidak diperlukan';c.style.setProperty('--p',0);tr.style.width='0';return}
+  const hs=y>=9?['Sesuai umur','hijau','var(--hijau)']:y>=7?['Meragukan','kuning','#e09a12']:['Penyimpangan','merah','var(--merah)'];
+  tr.style.width=dij*10+'%';
+  document.getElementById('cincin-n').textContent=y;
+  c.style.setProperty('--p',y*10);c.style.setProperty('--warna',dij==10?hs[2]:'var(--utama)');
+  el.innerHTML=`<b>${dij}</b> dari 10 terjawab · jawaban "Ya" <b>${y}</b>`+(dij==10?` <span class="badge ${hs[1]} hasil-tag">${hs[0]}</span>`:'');
+}
+f.addEventListener('change',e=>{
+  if(e.target.type==='radio'){
+    const s=e.target.closest('.soal');s.classList.remove('dijawab-Y','dijawab-T');s.classList.add('dijawab-'+e.target.value);skor();
+    const n=+e.target.name.slice(1),nx=document.getElementById('soal'+(n+1));
+    if(nx&&!nx.querySelector('input:checked')){const r=nx.getBoundingClientRect();if(r.top>innerHeight-180)window.scrollBy({top:r.top-innerHeight/2.5,behavior:'smooth'})}
+    return}
+  hitung()});
+let tm;f.addEventListener('input',e=>{if(e.target.type==='radio')return;clearTimeout(tm);tm=setTimeout(hitung,300)});
+f.addEventListener('submit',e=>{
+  const kosong=[...f.querySelectorAll('.soal')].find(s=>!s.querySelector('input:checked'));
+  if(kosong){e.preventDefault();kosong.scrollIntoView({behavior:'smooth',block:'center'});kosong.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:350,iterations:2});return}
+  document.getElementById('simpan').classList.add('loading')});
+(function(){const l=new Date(ANAK.tgl_lahir),n=new Date();if((n-l)/864e5<730)f.cara_ukur.value='terlentang'})();
+hitung();
+</script>
+{% endblock %}

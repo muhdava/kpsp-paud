@@ -1,0 +1,70 @@
+{% extends "base.html" %}{% block body %}
+<div class="aksi noprint" style="justify-content:space-between;margin-bottom:8px">
+  <a href="{{ url_for('anak_detail', aid=a.id) }}">← {{ a.nama }}</a>
+  <button class="btn alt kecil" onclick="print()">Cetak</button>
+</div>
+<h1>Hasil skrining · {{ a.nama }}</h1>
+<div class="kartu reveal">
+  <div class="gz">
+    <div><small>PAUD / TK</small><b>{{ a.paud_nama }}</b></div>
+    <div><small>Kelurahan</small><b>{{ a.kelurahan_nama }}</b></div>
+    <div><small>Jenis kelamin</small><b>{{ 'Laki-laki' if a.jk=='L' else 'Perempuan' }}</b></div>
+    <div><small>Tanggal lahir</small><b>{{ a.tgl_lahir|tgl }}</b></div>
+    <div><small>Tanggal periksa</small><b>{{ s.tgl_periksa|tgl }}</b></div>
+    <div><small>Umur</small><b>{{ s.umur_teks }}</b><small>dibulatkan {{ s.umur_bulan }} bulan</small></div>
+    <div><small>Pemeriksa (guru)</small><b>{{ guru.nama if guru else '—' }}</b></div>
+  </div>
+</div>
+
+<div class="grid g2">
+<div class="kartu reveal">
+  <h2>Perkembangan (KPSP)</h2>
+  {% if s.hasil_kpsp %}
+  <div class="hasil-box {{ s.hasil_kpsp|warna }}"><small>KPSP {{ s.kpsp_umur }} bulan · jawaban Ya {{ s.skor }}/10</small><b class="big">{{ s.hasil_kpsp }}</b>
+    <span class="kecil">{{ tindakan }}</span></div>
+  <p class="kecil redup">Interpretasi: 9–10 sesuai umur · 7–8 meragukan · ≤6 penyimpangan</p>
+  {% if soal %}<details><summary class="kecil" style="cursor:pointer">Lihat jawaban per pertanyaan</summary>
+    <table style="margin-top:8px">{% for q in soal.soal %}{% set j = s.jawaban[loop.index0] %}
+      <tr><td class="kecil">{{ loop.index }}. {{ q[0] }} <span class="redup">({{ q[1] }})</span></td>
+          <td><span class="badge {{ 'hijau' if j=='Y' else 'merah' }}">{{ 'Ya' if j=='Y' else 'Tidak' }}</span></td></tr>{% endfor %}</table></details>{% endif %}
+  {% else %}<p class="redup">KPSP tidak dilakukan (umur di luar rentang).</p>{% endif %}
+  {% if s.catatan_guru %}<p><b>Catatan guru:</b> {{ s.catatan_guru }}</p>{% endif %}
+</div>
+
+<div class="kartu reveal">
+  <h2>Status gizi</h2>
+  {% if s.status_gizi %}<div class="hasil-box {{ s.status_gizi|warna }}"><small>Status gizi</small><b class="big">{{ s.status_gizi }}</b></div>{% endif %}
+  <table>
+    <tr><th>Ukuran</th><th class="n">Nilai</th><th>Indeks</th><th class="n">z</th><th>Klasifikasi</th></tr>
+    <tr><td>Berat badan</td><td class="n">{{ s.bb or '—' }} kg</td><td>BB/U</td><td class="n">{{ s.z_bbu if s.z_bbu is not none else '' }}</td><td>{% if s.st_bbu %}<span class="badge {{ s.st_bbu|warna }}">{{ s.st_bbu }}</span>{% endif %}</td></tr>
+    <tr><td>{{ 'Panjang' if s.cara_ukur=='terlentang' else 'Tinggi' }} badan</td><td class="n">{{ s.tb or '—' }} cm</td><td>PB/U / TB/U</td><td class="n">{{ s.z_tbu if s.z_tbu is not none else '' }}</td><td>{% if s.st_tbu %}<span class="badge {{ s.st_tbu|warna }}">{{ s.st_tbu }}</span>{% endif %}</td></tr>
+    <tr><td></td><td></td><td>BB/PB / BB/TB</td><td class="n">{{ s.z_bbtb if s.z_bbtb is not none else '' }}</td><td>{% if s.st_bbtb %}<span class="badge {{ s.st_bbtb|warna }}">{{ s.st_bbtb }}</span>{% endif %}</td></tr>
+    <tr><td>IMT</td><td class="n">{{ s.imt or '—' }}</td><td>IMT/U</td><td class="n">{{ s.z_imtu if s.z_imtu is not none else '' }}</td><td>{% if s.st_imtu %}<span class="badge {{ s.st_imtu|warna }}">{{ s.st_imtu }}</span>{% endif %}</td></tr>
+    <tr><td>Lingkar kepala</td><td class="n">{{ s.lk or '—' }} cm</td><td>LK/U</td><td class="n">{{ s.z_lku if s.z_lku is not none else '' }}</td><td>{% if s.st_lku %}<span class="badge {{ s.st_lku|warna }}">{{ s.st_lku }}</span>{% endif %}</td></tr>
+    <tr><td>LiLA</td><td class="n">{{ s.lila or '—' }} cm</td><td>LiLA</td><td></td><td>{% if s.st_lila %}<span class="badge {{ s.st_lila|warna }}">{{ s.st_lila }}</span>{% endif %}</td></tr>
+  </table>
+  <p class="kecil redup">Acuan: Permenkes No. 2 Tahun 2020 (Standar Antropometri Anak); LiLA & LK: Buku Bagan SDIDTK 2022.</p>
+</div>
+</div>
+
+<div class="kartu reveal">
+  <h2>Tindak lanjut Puskesmas</h2>
+  {% if user.peran == 'puskesmas' %}
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="form-row">
+      <div><label>Status tindak lanjut</label><select name="tindak_lanjut">{% for t in TINDAK_LANJUT %}<option {{ 'selected' if s.tindak_lanjut==t }}>{{ t }}</option>{% endfor %}</select></div>
+    </div>
+    <div style="margin-bottom:12px"><label>Catatan untuk guru / orang tua</label><textarea name="catatan_puskesmas" rows="3">{{ s.catatan_puskesmas or '' }}</textarea></div>
+    <button class="btn">Simpan tindak lanjut</button>
+  </form>
+  {% else %}
+  <p><span class="badge {{ s.tindak_lanjut|warna }}">{{ s.tindak_lanjut }}</span></p>
+  {% if s.catatan_puskesmas %}<p>{{ s.catatan_puskesmas }}</p>{% endif %}
+  {% endif %}
+  {% if verif %}<p class="kecil redup">Diperbarui oleh {{ verif.nama }} pada {{ s.diverifikasi_pada|replace('T',' ') }}</p>{% endif %}
+</div>
+
+<form method="post" action="{{ url_for('skrining_hapus', sid=s.id) }}" class="noprint" onsubmit="return confirm('Hapus data skrining ini? Tindakan ini tidak bisa dibatalkan.')">
+  <input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn bahaya kecil">Hapus skrining ini</button></form>
+{% endblock %}

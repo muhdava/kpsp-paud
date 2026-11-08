@@ -1,0 +1,9 @@
+# data lokal & rahasia (database, secret key, password admin awal)
+app/instance/
+__pycache__/
+*.pyc
+*.db
+# pengaturan lokal editor/Claude
+.claude/
+# PDF sumber (besar, tidak dibutuhkan aplikasi; gambar KPSP sudah ada di app/static/kpsp)
+*.pdf

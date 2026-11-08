@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d8a76">
+<title>{% block title %}Monitoring KPSP PAUD{% endblock %}</title>
+<script>try{if(localStorage.getItem('sidebar')==='tutup')document.documentElement.classList.add('sb-tutup')}catch(e){}try{if(sessionStorage.getItem('masuk'))document.documentElement.classList.add('sudah-masuk')}catch(e){}document.documentElement.classList.add('tanpa-anim')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=6">
+<link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v=6">
+</head>
+<body class="{{ 'ada-nav' if user else 'tanpa-nav' }}">
+{% from "_ikon.html" import ikon %}
+{% if user %}
+{% set ep = request.endpoint %}
+{% if user.peran == 'guru' %}
+  {% set menu = [
+    ('guru', 'Data Anak', 'rumah', ep in ('guru','anak_detail','skrining_baru','skrining_detail')),
+    ('anak_form', 'Tambah Anak', 'plus', ep == 'anak_form'),
+    ('akun', 'Akun', 'user', ep == 'akun')] %}
+{% else %}
+  {% set menu = [
+    ('dashboard', 'Dashboard', 'grafik', ep == 'dashboard'),
+    ('data', 'Data Skrining', 'daftar', ep in ('data','skrining_detail','anak_detail')),
+    ('wilayah', 'Wilayah', 'peta', ep == 'wilayah'),
+    ('pengguna', 'Pengguna', 'grup', ep == 'pengguna'),
+    ('akun', 'Akun', 'user', ep == 'akun')] %}
+{% endif %}
+
+<!-- Sidebar (desktop) -->
+<aside class="sidebar" aria-label="Navigasi utama">
+  <div class="sb-atas">
+    <a class="sb-brand" href="{{ url_for('index') }}"><span class="logo">{{ ikon('logo') }}</span>
+      <span class="sb-teks"><b>Monitoring KPSP</b><small>{{ 'PAUD / TK' if user.peran=='guru' else 'Puskesmas' }}</small></span></a>
+    <button class="sb-toggle" type="button" id="sbToggle" aria-label="Buka/tutup menu" title="Buka/tutup menu">{{ ikon('panel') }}</button>
+  </div>
+  <nav class="sb-menu" id="sbMenu">
+    <span class="sb-indikator" id="sbInd" aria-hidden="true"></span>
+    {% for e, label, ic, aktif in menu %}
+    <a href="{{ url_for(e) }}" class="sb-item{{ ' on' if aktif }}" data-nav="{{ e }}" data-tip="{{ label }}" {{ 'aria-current=page' if aktif }}>
+      <span class="sb-ikon">{{ ikon(ic) }}</span><span class="sb-teks">{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+  <div class="sb-bawah">
+    <div class="sb-user"><span class="avatar">{{ user.nama[:1]|upper }}</span>
+      <span class="sb-teks"><b>{{ user.nama }}</b><small>{{ user.paud_nama if user.peran=='guru' else 'Petugas Puskesmas' }}</small></span></div>
+    <a href="{{ url_for('logout') }}" class="sb-item keluar" data-tip="Keluar"><span class="sb-ikon">{{ ikon('keluar') }}</span><span class="sb-teks">Keluar</span></a>
+  </div>
+</aside>
+
+<!-- Top bar (HP / tablet) -->
+<header class="topbar">
+  <a class="sb-brand" href="{{ url_for('index') }}"><span class="logo">{{ ikon('logo') }}</span>
+    <span><b>Monitoring KPSP</b><small>{% if user.peran == 'guru' %}{{ user.paud_nama }} · {{ user.kelurahan_nama }}{% else %}Petugas Puskesmas{% endif %}</small></span></a>
+  <a class="topbar-keluar" href="{{ url_for('logout') }}" aria-label="Keluar">{{ ikon('keluar') }}</a>
+</header>
+
+<!-- Bottom nav ala TikTok (HP / tablet) -->
+<nav class="bottomnav {{ 'tengah-plus' if user.peran == 'guru' }}" id="bnMenu" aria-label="Navigasi bawah">
+  <span class="bn-indikator" id="bnInd" aria-hidden="true"></span>
+  {% for e, label, ic, aktif in menu %}
+    {% if e == 'anak_form' %}
+    <a href="{{ url_for(e) }}" class="bn-item bn-plus{{ ' on' if aktif }}" data-nav="{{ e }}" aria-label="{{ label }}"><span class="plus-btn"><i></i>{{ ikon('plus') }}</span></a>
+    {% else %}
+    <a href="{{ url_for(e) }}" class="bn-item{{ ' on' if aktif }}" data-nav="{{ e }}" {{ 'aria-current=page' if aktif }}>
+      <span class="bn-ikon">{{ ikon(ic) }}</span><span class="bn-label">{{ label }}</span></a>
+    {% endif %}
+  {% endfor %}
+</nav>
+{% else %}
+<header class="top">
+  <a class="brand" href="{{ url_for('index') }}"><span class="logo">{{ ikon('logo') }}</span>
+    <span>Monitoring KPSP PAUD<small>Skrining perkembangan & status gizi anak</small></span></a>
+</header>
+{% endif %}
+
+<div class="konten">
+<main>
+  {% for kat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ kat }}" role="status">{{ msg }}</div>{% endfor %}
+  {% block body %}{% endblock %}
+</main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}?v=6"></script>
+{% block script %}{% endblock %}
+</body>
+</html>

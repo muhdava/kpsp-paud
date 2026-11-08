@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block title %}Daftar Guru · Monitoring KPSP{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-hero">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <h2>Daftar sebagai guru PAUD / TK</h2>
+    <p>Setelah mendaftar, petugas Puskesmas akan mengaktifkan akun Anda.</p>
+    <ul>
+      <li><span>{{ ikon('sekolah') }}</span>Isi nama PAUD/TK dan kelurahan</li>
+      <li><span>{{ ikon('cek') }}</span>Tunggu aktivasi Puskesmas</li>
+      <li><span>{{ ikon('anak') }}</span>Mulai catat & skrining anak</li>
+    </ul>
+  </div>
+  <div class="auth-form">
+    <h1>Buat akun</h1>
+    {% if not kelurahan %}<div class="flash warn">Daftar kelurahan belum diisi petugas Puskesmas. Hubungi Puskesmas terlebih dahulu.</div>{% endif %}
+    <form method="post" style="margin-top:12px">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="form-row">
+        <div><label>Nama lengkap guru</label><input name="nama" required value="{{ request.form.nama }}"></div>
+        <div><label>No. HP (opsional)</label><input name="hp" inputmode="tel" value="{{ request.form.hp }}"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Nama PAUD / TK</label><input name="paud" required value="{{ request.form.paud }}" placeholder="mis. TK Pertiwi 1"></div>
+        <div><label>Wilayah kelurahan</label>
+          <select name="kelurahan_id" required><option value="">— pilih —</option>
+            {% for k in kelurahan %}<option value="{{ k.id }}" {{ 'selected' if request.form.kelurahan_id|string == k.id|string }}>{{ k.nama }}</option>{% endfor %}
+          </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Username</label><input name="username" required pattern="[A-Za-z0-9_.]{3,30}" title="3-30 huruf/angka" value="{{ request.form.username }}" autocomplete="username"></div>
+        <div><label>Password (min. 6)</label><div class="pw"><input id="pw" name="password" type="password" required minlength="6" autocomplete="new-password"><button type="button" data-lihat="pw" aria-label="Tampilkan password">{{ ikon('mata') }}</button></div></div>
+      </div>
+      <button class="btn" style="width:100%;padding:12px;margin-top:4px">Daftar</button>
+    </form>
+    <p class="kecil redup" style="margin-top:16px"><a href="{{ url_for('login') }}">← Kembali ke halaman masuk</a></p>
+  </div>
+</div>
+{% endblock %}

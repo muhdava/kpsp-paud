@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block body %}
+<h1>Pengguna</h1>
+<div class="kartu reveal">
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Nama</th><th>Username</th><th>Peran</th><th>PAUD / Kelurahan</th><th>HP</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for u in rows %}<tr>
+      <td><b>{{ u.nama }}</b></td><td>{{ u.username }}</td><td>{{ 'Guru' if u.peran=='guru' else 'Puskesmas' }}</td>
+      <td>{{ u.paud or '—' }}{% if u.kel %}<br><span class="kecil redup">{{ u.kel }}</span>{% endif %}</td><td>{{ u.hp or '' }}</td>
+      <td>{% if u.aktif %}<span class="badge hijau">Aktif</span>{% else %}<span class="badge kuning">Menunggu / nonaktif</span>{% endif %}</td>
+      <td class="aksi">
+        <form method="post" class="inline"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ u.id }}">
+          {% if u.aktif %}{% if u.id != user.id %}<button class="btn alt kecil" name="aksi" value="nonaktifkan">Nonaktifkan</button>{% endif %}
+          {% else %}<button class="btn kecil" name="aksi" value="aktifkan">Aktifkan</button>{% endif %}</form>
+        {% if u.id != user.id %}<form method="post" class="inline" onsubmit="return confirm('Buat password baru untuk {{ u.username }}?')"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ u.id }}"><button class="btn alt kecil" name="aksi" value="reset">Reset password</button></form>{% endif %}
+      </td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+<div class="kartu reveal" style="max-width:640px">
+  <h2>Tambah akun petugas Puskesmas</h2>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="aksi" value="tambah_petugas">
+    <div class="form-row">
+      <div><label>Nama</label><input name="nama" required></div>
+      <div><label>Username</label><input name="username" required pattern="[A-Za-z0-9_.]{3,30}"></div>
+      <div><label>Password (min. 6)</label><input name="password" type="password" required minlength="6" autocomplete="new-password"></div>
+    </div>
+    <button class="btn">Tambah</button>
+  </form>
+  <p class="kecil redup">Guru mendaftar sendiri lewat halaman Daftar, lalu diaktifkan di sini.</p>
+</div>
+{% endblock %}

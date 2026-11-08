@@ -1,0 +1,68 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block body %}
+<div class="kepala">
+  <div><h1>Dashboard monitoring</h1><div class="redup kecil">Skrining KPSP & status gizi anak PAUD/TK wilayah kerja</div></div>
+  <a class="btn alt kecil" href="{{ url_for('data', **args) }}">{{ ikon('daftar') }} Lihat data</a>
+</div>
+{% if menunggu %}<div class="flash warn">{{ menunggu }} akun guru menunggu aktivasi.&nbsp;<a href="{{ url_for('pengguna') }}"><b>Tinjau sekarang →</b></a></div>{% endif %}
+{% set lengkap = false %}{% include "_filter.html" %}
+
+{% macro bars(data, total) %}
+  {% for k, v in data %}<div class="bar-row"><span>{{ k }}</span><div class="bar"><i class="{{ k|warna }}" style="width:{{ (v / total * 100) if total else 0 }}%;transition-delay:{{ loop.index0 * 90 }}ms"></i></div><span class="n" style="text-align:right;font-weight:700">{{ v }}</span></div>{% endfor %}
+{% endmacro %}
+
+<div class="grid g4" style="margin-bottom:18px">
+  <div class="stat reveal"><div class="si">{{ ikon('cek') }}</div><b data-hitung="{{ total }}">0</b><span>Anak terskrining</span></div>
+  <div class="stat aksen reveal"><div class="si">{{ ikon('sekolah') }}</div><b data-hitung="{{ jml.anak }}">0</b><span>Anak terdaftar · {{ jml.paud }} PAUD/TK</span></div>
+  <div class="stat merah reveal"><div class="si">{{ ikon('awas') }}</div><b data-hitung="{{ kpsp[2][1] }}">0</b><span>KPSP penyimpangan</span></div>
+  <div class="stat kuning reveal"><div class="si">{{ ikon('tanya') }}</div><b data-hitung="{{ kpsp[1][1] }}">0</b><span>KPSP meragukan</span></div>
+  <div class="stat merah reveal"><div class="si">{{ ikon('tl') }}</div><b data-hitung="{{ jml_prioritas }}">0</b><span>Perlu tindak lanjut</span></div>
+</div>
+
+<div class="grid g2">
+  <div class="kartu"><h2><span class="ikon-h">{{ ikon('grafik') }}</span>Hasil KPSP</h2>{{ bars(kpsp, total) }}</div>
+  <div class="kartu"><h2><span class="ikon-h">{{ ikon('gizi') }}</span>Status gizi (BB/TB · IMT/U)</h2>{{ bars(gz, total) }}</div>
+  <div class="kartu"><h2><span class="ikon-h">{{ ikon('ukur') }}</span>Tinggi badan menurut umur</h2>{{ bars(tbu, total) }}</div>
+  <div class="kartu"><h2><span class="ikon-h">{{ ikon('tl') }}</span>Status tindak lanjut</h2>{{ bars(tl, total) }}</div>
+</div>
+
+<div class="kartu reveal">
+  <div class="aksi" style="justify-content:space-between"><h2><span class="ikon-h" style="background:var(--merah-bg);color:var(--merah)">{{ ikon('awas') }}</span>Prioritas tindak lanjut</h2>
+    <a class="kecil" href="{{ url_for('data', tl='Belum ditindaklanjuti') }}"><b>Lihat semua →</b></a></div>
+  {% if not prioritas %}<div class="kosong">{{ ikon('cek') }}<p>Tidak ada kasus yang menunggu tindak lanjut.</p></div>{% else %}
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Anak</th><th>PAUD / Kelurahan</th><th>Tgl periksa</th><th>KPSP</th><th>Status gizi</th><th>TB/U</th><th></th></tr></thead>
+    <tbody>{% for r in prioritas %}<tr>
+      <td><span class="nama-anak"><span class="ava {{ r.jk }}">{{ r.anak[:1]|upper }}</span><span>{{ r.anak }}<br><span class="redup kecil" style="font-weight:500">{{ r.umur_teks }}</span></span></span></td>
+      <td>{{ r.paud }}<br><span class="kecil redup">{{ r.kelurahan }}</span></td>
+      <td>{{ r.tgl_periksa|tgl }}</td>
+      <td>{% if r.hasil_kpsp %}<span class="badge {{ r.hasil_kpsp|warna }}">{{ r.hasil_kpsp }} · {{ r.skor }}</span>{% endif %}</td>
+      <td>{% if r.status_gizi %}<span class="badge {{ r.status_gizi|warna }}">{{ r.status_gizi }}</span>{% endif %}</td>
+      <td>{% if r.st_tbu %}<span class="badge {{ r.st_tbu|warna }}">{{ r.st_tbu }}</span>{% endif %}</td>
+      <td><a class="btn kecil" href="{{ url_for('skrining_detail', sid=r.id) }}">Tindak lanjut</a></td></tr>{% endfor %}</tbody>
+  </table></div>{% endif %}
+</div>
+
+<div class="kartu reveal">
+  <h2><span class="ikon-h">{{ ikon('grafik') }}</span>Rekap per kelurahan</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Kelurahan</th><th class="n">PAUD</th><th class="n">Terskrining</th><th class="n">Sesuai</th><th class="n">Meragukan</th><th class="n">Penyimpangan</th><th style="min-width:140px">% sesuai</th><th class="n">Masalah gizi</th><th class="n">Pendek</th></tr></thead>
+    <tbody>{% for nama, k in per_kel %}{% set pct = k['Sesuai umur'] / k.total * 100 %}<tr>
+      <td><b>{{ nama }}</b></td><td class="n">{{ k.paud|length }}</td><td class="n">{{ k.total }}</td>
+      <td class="n">{{ k['Sesuai umur'] }}</td><td class="n">{{ k['Meragukan'] }}</td><td class="n">{{ k['Penyimpangan'] }}</td>
+      <td><div class="aksi" style="gap:8px;flex-wrap:nowrap"><div class="bar" style="flex:1"><i class="{{ 'hijau' if pct>=80 else ('kuning' if pct>=60 else 'merah') }} jalan" style="width:{{ pct }}%"></i></div><b class="kecil">{{ '%.0f'|format(pct) }}%</b></div></td>
+      <td class="n">{{ k.gizi }}</td><td class="n">{{ k.pendek }}</td></tr>
+    {% else %}<tr><td colspan="9" class="redup">Belum ada data.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+
+<div class="kartu reveal">
+  <h2><span class="ikon-h">{{ ikon('sekolah') }}</span>Rekap per PAUD / TK</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>PAUD / TK</th><th>Kelurahan</th><th class="n">Terskrining</th><th class="n">Sesuai</th><th class="n">Meragukan</th><th class="n">Penyimpangan</th><th class="n">Masalah gizi</th></tr></thead>
+    <tbody>{% for key, k in per_paud %}<tr>
+      <td><b>{{ key[0] }}</b></td><td>{{ key[1] }}</td><td class="n">{{ k.total }}</td>
+      <td class="n">{{ k['Sesuai umur'] }}</td><td class="n">{{ k['Meragukan'] }}</td><td class="n">{{ k['Penyimpangan'] }}</td><td class="n">{{ k.gizi }}</td></tr>
+    {% else %}<tr><td colspan="7" class="redup">Belum ada data.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

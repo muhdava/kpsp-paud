@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block body %}
+<div class="kepala">
+  <h1 style="margin:0">Data skrining</h1>
+  <a class="btn alt" href="{{ request.full_path }}{{ '&' if '?' in request.full_path else '?' }}format=csv">⤓ Unduh CSV (Excel)</a>
+</div>
+{% set lengkap = true %}{% include "_filter.html" %}
+<div class="kartu reveal">
+  <p class="kecil redup">{{ rows|length }} data</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Tgl periksa</th><th>Anak</th><th>PAUD / Kelurahan</th><th>Umur</th><th>KPSP</th><th class="n">BB</th><th class="n">TB</th><th>Status gizi</th><th>TB/U</th><th>LK</th><th>LiLA</th><th>Tindak lanjut</th></tr></thead>
+    <tbody>{% for r in rows %}<tr>
+      <td>{{ r.tgl_periksa|tgl }}</td>
+      <td><a href="{{ url_for('skrining_detail', sid=r.id) }}"><b>{{ r.anak }}</b></a> <span class="kecil redup">{{ r.jk }}</span></td>
+      <td>{{ r.paud }}<br><span class="kecil redup">{{ r.kelurahan }}</span></td>
+      <td class="kecil">{{ r.umur_teks }}</td>
+      <td>{% if r.hasil_kpsp %}<span class="badge {{ r.hasil_kpsp|warna }}">{{ r.hasil_kpsp }} ({{ r.skor }})</span>{% else %}—{% endif %}</td>
+      <td class="n">{{ r.bb or '' }}</td><td class="n">{{ r.tb or '' }}</td>
+      <td>{% if r.status_gizi %}<span class="badge {{ r.status_gizi|warna }}">{{ r.status_gizi }}</span>{% endif %}</td>
+      <td>{% if r.st_tbu %}<span class="badge {{ r.st_tbu|warna }}">{{ r.st_tbu }}</span>{% endif %}</td>
+      <td>{% if r.st_lku and r.z_lku is not none %}<span class="badge {{ r.st_lku|warna }}">{{ r.st_lku }}</span>{% endif %}</td>
+      <td>{% if r.st_lila and not r.st_lila.startswith('Tidak') %}<span class="badge {{ r.st_lila|warna }}">{{ r.st_lila }}</span>{% endif %}</td>
+      <td><span class="badge {{ r.tindak_lanjut|warna }}">{{ r.tindak_lanjut }}</span></td></tr>
+    {% else %}<tr><td colspan="12" class="redup">Tidak ada data sesuai filter.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block body %}
+<div class="kepala">
+  <h1 class="nama-anak" style="font-size:24px"><span class="ava {{ a.jk }}" style="width:44px;height:44px;font-size:17px">{{ a.nama[:1]|upper }}</span>{{ a.nama }}</h1>
+  {% if user.peran == 'guru' %}<div class="aksi">
+    <a class="btn alt" href="{{ url_for('anak_form', aid=a.id) }}">Ubah data</a>
+    <a class="btn" href="{{ url_for('skrining_baru', aid=a.id) }}">+ Skrining baru</a></div>{% endif %}
+</div>
+<div class="kartu reveal">
+  <div class="gz">
+    <div><small>Jenis kelamin</small><b>{{ 'Laki-laki' if a.jk=='L' else 'Perempuan' }}</b></div>
+    <div><small>Tanggal lahir</small><b>{{ a.tgl_lahir|tgl }}</b></div>
+    <div><small>Umur hari ini</small><b>{{ umur.teks }}</b></div>
+    <div><small>Orang tua / wali</small><b>{{ a.nama_ortu or '—' }}</b></div>
+    <div><small>PAUD / TK</small><b>{{ a.paud_nama }}</b></div>
+    <div><small>Kelurahan</small><b>{{ a.kelurahan_nama }}</b></div>
+  </div>
+</div>
+<div class="kartu reveal">
+  <h2>Riwayat skrining</h2>
+  {% if not riwayat %}<p class="redup">Belum ada skrining.</p>{% else %}
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Tgl periksa</th><th>Umur</th><th>KPSP</th><th>BB / TB</th><th>Status gizi</th><th>TB/U</th><th>Tindak lanjut</th><th></th></tr></thead>
+    <tbody>{% for s in riwayat %}<tr>
+      <td>{{ s.tgl_periksa|tgl }}</td><td>{{ s.umur_teks }}</td>
+      <td>{% if s.hasil_kpsp %}<span class="badge {{ s.hasil_kpsp|warna }}">{{ s.hasil_kpsp }}</span> <span class="kecil redup">{{ s.skor }}/10 · form {{ s.kpsp_umur }} bln</span>{% else %}—{% endif %}</td>
+      <td>{{ s.bb or '—' }} kg / {{ s.tb or '—' }} cm</td>
+      <td>{% if s.status_gizi %}<span class="badge {{ s.status_gizi|warna }}">{{ s.status_gizi }}</span>{% else %}—{% endif %}</td>
+      <td>{% if s.st_tbu %}<span class="badge {{ s.st_tbu|warna }}">{{ s.st_tbu }}</span>{% else %}—{% endif %}</td>
+      <td><span class="badge {{ s.tindak_lanjut|warna }}">{{ s.tindak_lanjut }}</span></td>
+      <td><a href="{{ url_for('skrining_detail', sid=s.id) }}">Detail</a></td></tr>{% endfor %}</tbody>
+  </table></div>{% endif %}
+</div>
+{% endblock %}
