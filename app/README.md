@@ -12,7 +12,7 @@ Buka http://127.0.0.1:5000. Saat pertama jalan, akun admin Puskesmas dibuat dan 
 yang sama: `HOST=0.0.0.0 python app/app.py`.
 
 ## Alur
-1. Puskesmas login → **Kelurahan & PAUD**: isi daftar kelurahan wilayah kerja.
+1. Puskesmas login → **PAUD/TK**: tambah/ubah PAUD/TK. Kelurahan sudah tetap (Koja, Lagoa, Tugu Utara, Tugu Selatan, Rawa Badak Selatan, Rawa Badak Utara).
 2. Guru buka **Daftar** → isi nama, nama PAUD/TK, kelurahan → Puskesmas mengaktifkan di menu **Pengguna**.
 3. Guru: tambah anak (nama, JK, tgl lahir) → **Skrining**: tgl periksa → umur otomatis → BB/TB/LK/LiLA → status gizi
    otomatis → 10 pertanyaan KPSP sesuai umur (dengan gambar halaman buku) → skor & interpretasi.
