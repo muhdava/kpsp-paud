@@ -63,6 +63,24 @@ def _secret_key():
 
 
 app = Flask(__name__)
+class _PathAsliVercel:
+    """Rewrite Vercel mengubah path menjadi /api/index; path asli dikirim lewat ?__path=…"""
+
+    def __init__(self, wsgi):
+        self.wsgi = wsgi
+
+    def __call__(self, environ, start_response):
+        from urllib.parse import parse_qsl, urlencode
+        qs = parse_qsl(environ.get("QUERY_STRING", ""), keep_blank_values=True)
+        asli = [v for k, v in qs if k == "__path"]
+        if asli:
+            environ["PATH_INFO"] = "/" + asli[0].lstrip("/")
+            environ["SCRIPT_NAME"] = ""
+            environ["QUERY_STRING"] = urlencode([(k, v) for k, v in qs if k != "__path"])
+        return self.wsgi(environ, start_response)
+
+
+app.wsgi_app = _PathAsliVercel(app.wsgi_app)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or (secrets.token_hex(32) if DI_VERCEL else _secret_key())
 app.config["SESSION_COOKIE_SECURE"] = DI_VERCEL
 app.config["SESSION_COOKIE_HTTPONLY"] = True
