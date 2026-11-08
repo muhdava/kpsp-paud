@@ -5,6 +5,7 @@ import json
 import os
 import secrets
 import sqlite3
+import sys
 from datetime import date, datetime
 from functools import wraps
 
@@ -12,7 +13,9 @@ from flask import (Flask, Response, abort, flash, g, jsonify, redirect,
                    render_template, request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
-import gizi
+# agar modul pendamping (gizi.py) ditemukan dari entry point mana pun (lokal, api/index.py, deteksi Flask Vercel)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gizi  # noqa: E402
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 INSTANCE = os.path.join(BASE, "instance")
