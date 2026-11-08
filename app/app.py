@@ -21,7 +21,15 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 INSTANCE = os.path.join(BASE, "instance")
 DB_PATH = os.environ.get("KPSP_DB", os.path.join(INSTANCE, "kpsp.db"))
 # Bila DATABASE_URL diisi (mis. Supabase/Postgres) dipakai Postgres; jika tidak, SQLite lokal.
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+def _bersihkan_url(v):
+    v = (v or "").strip().strip('"').strip("'").strip()
+    if v.upper().startswith("DATABASE_URL="):  # bila ikut tersalin beserta nama variabelnya
+        v = v.split("=", 1)[1].strip().strip('"').strip("'")
+    return v
+
+
+_URL_MENTAH = os.environ.get("DATABASE_URL")
+DATABASE_URL = _bersihkan_url(_URL_MENTAH)
 PAKAI_PG = DATABASE_URL.startswith(("postgres://", "postgresql://"))
 if PAKAI_PG:
     import psycopg
@@ -33,8 +41,14 @@ else:
 DI_VERCEL = bool(os.environ.get("VERCEL"))
 KONFIG_SALAH = None
 if DI_VERCEL and not PAKAI_PG:
-    KONFIG_SALAH = ("Environment variable DATABASE_URL belum diisi (atau belum diterapkan) di Vercel. "
-                    "Isi di Project Settings > Environment Variables, lalu lakukan Redeploy.")
+    if _URL_MENTAH is None:
+        KONFIG_SALAH = ("Environment variable DATABASE_URL tidak terbaca di deployment ini "
+                        f"(environment Vercel: {os.environ.get('VERCEL_ENV', '?')}). Pastikan variabel dicentang untuk "
+                        "environment tersebut, lalu Redeploy.")
+    else:
+        awal = DATABASE_URL.split("://")[0][:20] if "://" in DATABASE_URL else "(tanpa ://)"
+        KONFIG_SALAH = ("DATABASE_URL terbaca tetapi formatnya tidak dikenali: harus diawali postgresql:// "
+                        f"(terbaca: '{awal}…', panjang {len(DATABASE_URL)} karakter). Periksa isinya lalu Redeploy.")
 elif not PAKAI_PG:
     os.makedirs(INSTANCE, exist_ok=True)
 
