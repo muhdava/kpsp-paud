@@ -31,7 +31,7 @@ yang sama: `HOST=0.0.0.0 python app/app.py`.
 - `app.py` – server Flask + SQLite (`instance/kpsp.db`)
 - `gizi.py` – hitung umur, pilih KPSP, z-score & klasifikasi
 - `data/kpsp.json` – pertanyaan KPSP dari Buku Bagan SDIDTK 2022; `data/who_lms.json` – tabel LMS WHO
-- `static/kpsp/` – gambar halaman KPSP dari PDF
+- `../public/static/` – CSS, JS, dan gambar halaman KPSP (dilayani CDN Vercel)
 
 ## Deploy (Vercel + Supabase)
 - Database: Supabase project `kpsp-paud`, tabel di schema `kpsp`, diakses role `kpsp_app` (hanya schema itu).

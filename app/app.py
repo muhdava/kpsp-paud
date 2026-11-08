@@ -62,7 +62,8 @@ def _secret_key():
     return open(p).read().strip()
 
 
-app = Flask(__name__)
+# file statis ada di public/static: di Vercel dilayani langsung oleh CDN, di lokal oleh Flask
+app = Flask(__name__, static_folder=os.path.join(BASE, "..", "public", "static"), static_url_path="/static")
 class _PathAsliVercel:
     """Rewrite Vercel mengubah path menjadi /api/index; path asli dikirim lewat ?__path=…"""
 
