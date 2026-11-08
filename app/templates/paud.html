@@ -1,0 +1,66 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}
+{% block title %}PAUD/TK · Monitoring KPSP{% endblock %}
+{% block body %}
+<div class="kepala">
+  <div><h1>PAUD / TK</h1><div class="redup kecil">{{ paud|length }} PAUD/TK di {{ kel|length }} kelurahan wilayah kerja Puskesmas</div></div>
+</div>
+
+<!-- 6 kelurahan tetap: sebagai ringkasan & filter -->
+<div class="kel-chip-grid reveal" role="tablist" aria-label="Filter kelurahan">
+  <a href="{{ url_for('kelola_paud') }}" class="kel-chip {{ 'on' if not pilih }}"><b>{{ paud|length }}</b><span>Semua kelurahan</span></a>
+  {% for k in kel %}
+  <a href="{{ url_for('kelola_paud', kel=k.id) }}" class="kel-chip {{ 'on' if pilih == k.id|string }}"><b>{{ k.n }}</b><span>{{ k.nama }}</span></a>
+  {% endfor %}
+</div>
+
+<div class="grid paud-grid">
+  <div class="kartu reveal paud-tambah">
+    <h2><span class="ikon-h">{{ ikon('plus') }}</span>Tambah PAUD / TK</h2>
+    <form method="post" action="{{ url_for('kelola_paud', kel=pilih) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="aksi" value="tambah_paud">
+      <div class="field"><label>Nama PAUD / TK</label><input name="nama" required maxlength="120" placeholder="mis. TK Pertiwi 1"></div>
+      <div class="field"><label>Kelurahan</label>
+        <select name="kelurahan_id" required><option value="">— pilih kelurahan —</option>
+          {% for k in kel %}<option value="{{ k.id }}" {{ 'selected' if pilih == k.id|string }}>{{ k.nama }}</option>{% endfor %}</select></div>
+      <button class="btn" style="width:100%">{{ ikon('plus') }} Tambah PAUD/TK</button>
+    </form>
+    <p class="kecil redup" style="margin:14px 0 0">PAUD/TK juga tercatat otomatis saat guru mendaftar. Daftar kelurahan bersifat tetap.</p>
+  </div>
+
+  <div class="kartu reveal">
+    <div class="grafik-kepala" style="margin-bottom:14px">
+      <h2><span class="ikon-h">{{ ikon('sekolah') }}</span>Daftar PAUD / TK</h2>
+      <div class="cari" style="margin:0;max-width:240px">{{ ikon('cari') }}<input id="cariPaud" placeholder="Cari PAUD/TK…"></div>
+    </div>
+    {% set tampil = paud if not pilih else paud|selectattr('kelurahan_id', 'equalto', pilih|int)|list %}
+    {% if not tampil %}
+      <div class="kosong">{{ ikon('kosong') }}<p>Belum ada PAUD/TK{{ ' di kelurahan ini' if pilih }}.</p></div>
+    {% else %}
+    <div class="paud-list" id="paudList">
+      {% for p in tampil %}
+      <div class="paud-item" data-nama="{{ p.nama|lower }}">
+        <div class="paud-baris">
+          <span class="ikon-h">{{ ikon('sekolah') }}</span>
+          <div class="paud-info"><b>{{ p.nama }}</b><small>{{ ikon('peta') }} {{ p.kel }}</small></div>
+          <div class="paud-angka"><span title="Guru"><b>{{ p.n_guru }}</b> guru</span><span title="Anak"><b>{{ p.n_anak }}</b> anak</span></div>
+          <button type="button" class="btn alt kecil" onclick="this.closest('.paud-item').classList.toggle('ubah')">Ubah</button>
+        </div>
+        <form method="post" action="{{ url_for('kelola_paud', kel=pilih) }}" class="paud-ubah">
+          <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ p.id }}">
+          <input name="nama" value="{{ p.nama }}" required maxlength="120" aria-label="Nama PAUD/TK">
+          <select name="kelurahan_id" aria-label="Kelurahan">{% for k in kel %}<option value="{{ k.id }}" {{ 'selected' if k.id == p.kelurahan_id }}>{{ k.nama }}</option>{% endfor %}</select>
+          <button class="btn kecil" name="aksi" value="ubah_paud">Simpan</button>
+          {% if not p.n_anak and not p.n_guru %}
+          <button class="btn bahaya kecil" name="aksi" value="hapus_paud" formnovalidate onclick="return confirm('Hapus {{ p.nama }}?')">Hapus</button>
+          {% else %}<span class="kecil redup">Tidak bisa dihapus: masih ada guru/anak.</span>{% endif %}
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block script %}<script>
+const cp=document.getElementById('cariPaud');if(cp)cp.oninput=()=>{const v=cp.value.toLowerCase();document.querySelectorAll('.paud-item').forEach(x=>x.style.display=x.dataset.nama.includes(v)?'':'none')};
+</script>{% endblock %}

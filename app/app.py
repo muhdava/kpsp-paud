@@ -130,6 +130,9 @@ CREATE INDEX IF NOT EXISTS ix_skr_anak ON skrining(anak_id);
 KOL_PENGGUNA = ("p.id, p.username, p.password_hash, p.nama, p.hp, p.peran, p.paud_id, p.aktif, p.dibuat, "
                 "p.email, p.jabatan, p.nip, p.foto_tipe, p.foto_versi")
 
+# 6 kelurahan wilayah kerja Puskesmas (tetap)
+KELURAHAN_TETAP = ["Koja", "Lagoa", "Tugu Utara", "Tugu Selatan", "Rawa Badak Selatan", "Rawa Badak Utara"]
+
 TINDAK_LANJUT = ["Belum ditindaklanjuti", "Edukasi / stimulasi", "Evaluasi ulang 2 minggu",
                  "Dirujuk ke Puskesmas", "Dirujuk ke RS", "Selesai"]
 
@@ -226,6 +229,8 @@ def init_db():
                       ("foto_tipe", "TEXT"), ("foto_versi", "INTEGER NOT NULL DEFAULT 0")]:
         if kol not in ada:  # database lama: tambahkan kolom profil
             con.execute(f"ALTER TABLE pengguna ADD COLUMN {kol} {tipe}")
+    if not con.execute("SELECT 1 FROM kelurahan").fetchone():
+        con.executemany("INSERT INTO kelurahan (nama) VALUES (?)", [(k,) for k in KELURAHAN_TETAP])
     if not con.execute("SELECT 1 FROM pengguna WHERE peran='puskesmas'").fetchone():
         pw = os.environ.get("ADMIN_PASSWORD") or secrets.token_urlsafe(9)
         con.execute("INSERT INTO pengguna (username, password_hash, nama, peran, aktif) "
@@ -803,38 +808,49 @@ def pengguna():
     return render_template("pengguna.html", rows=rows)
 
 
-@app.route("/wilayah", methods=["GET", "POST"])
+@app.route("/wilayah")
 @perlu_login("puskesmas")
-def wilayah():
+def wilayah():  # menu lama: kelurahan sudah tetap, kelola PAUD/TK di /paud
+    return redirect(url_for("kelola_paud"))
+
+
+@app.route("/paud", methods=["GET", "POST"])
+@perlu_login("puskesmas")
+def kelola_paud():
+    """Kelola daftar PAUD/TK. Kelurahan bersifat tetap (6 kelurahan wilayah kerja), tidak bisa diubah di sini."""
     if request.method == "POST":
         f = request.form
+        aksi = f.get("aksi")
+        nama = " ".join(f.get("nama", "").split())[:120]
+        kel_ok = lambda kid: q("SELECT 1 FROM kelurahan WHERE id=?", (kid,), satu=True) is not None
         try:
-            if f.get("aksi") == "tambah_kel":
-                for nama in f["nama"].splitlines():
-                    if nama.strip():
-                        db().execute("INSERT INTO kelurahan (nama) VALUES (?) ON CONFLICT DO NOTHING", (" ".join(nama.split()),))
-            elif f.get("aksi") == "ubah_kel":
-                db().execute("UPDATE kelurahan SET nama=? WHERE id=?", (" ".join(f["nama"].split()), f["id"]))
-            elif f.get("aksi") == "hapus_kel":
-                db().execute("DELETE FROM kelurahan WHERE id=?", (f["id"],))
-            elif f.get("aksi") == "tambah_paud":
-                db().execute("INSERT INTO paud (nama, kelurahan_id) VALUES (?,?)",
-                             (" ".join(f["nama"].split()), f["kelurahan_id"]))
-            elif f.get("aksi") == "ubah_paud":
-                db().execute("UPDATE paud SET nama=?, kelurahan_id=? WHERE id=?",
-                             (" ".join(f["nama"].split()), f["kelurahan_id"], f["id"]))
-            elif f.get("aksi") == "hapus_paud":
+            if aksi == "tambah_paud":
+                if not nama or not kel_ok(f.get("kelurahan_id")):
+                    flash("Isi nama PAUD/TK dan pilih kelurahan.", "err")
+                else:
+                    db().execute("INSERT INTO paud (nama, kelurahan_id) VALUES (?,?)", (nama, f["kelurahan_id"]))
+                    db().commit()
+                    flash(f"{nama} ditambahkan.", "ok")
+            elif aksi == "ubah_paud":
+                if not nama or not kel_ok(f.get("kelurahan_id")):
+                    flash("Nama PAUD/TK dan kelurahan wajib diisi.", "err")
+                else:
+                    db().execute("UPDATE paud SET nama=?, kelurahan_id=? WHERE id=?", (nama, f["kelurahan_id"], f["id"]))
+                    db().commit()
+                    flash("Perubahan disimpan.", "ok")
+            elif aksi == "hapus_paud":
                 db().execute("DELETE FROM paud WHERE id=?", (f["id"],))
-            db().commit()
+                db().commit()
+                flash("PAUD/TK dihapus.", "ok")
         except IntegrityError:
             db().con.rollback()
-            flash("Tidak bisa: nama sudah ada atau data masih dipakai (ada PAUD/anak/guru terkait).", "err")
-        return redirect(url_for("wilayah"))
+            flash("Tidak bisa: nama PAUD/TK sudah ada di kelurahan itu, atau masih punya guru/anak terdaftar.", "err")
+        return redirect(url_for("kelola_paud", kel=request.args.get("kel", "")))
     kel = q("SELECT k.*, (SELECT COUNT(*) FROM paud WHERE kelurahan_id=k.id) n FROM kelurahan k ORDER BY nama")
     paud = q("SELECT pa.*, k.nama AS kel, (SELECT COUNT(*) FROM anak WHERE paud_id=pa.id) n_anak, "
              "(SELECT COUNT(*) FROM pengguna WHERE paud_id=pa.id) n_guru FROM paud pa "
              "JOIN kelurahan k ON k.id=pa.kelurahan_id ORDER BY k.nama, pa.nama")
-    return render_template("wilayah.html", kel=kel, paud=paud)
+    return render_template("paud.html", kel=kel, paud=paud, pilih=request.args.get("kel", ""))
 
 
 @app.route("/favicon.ico")

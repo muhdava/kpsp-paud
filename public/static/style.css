@@ -473,3 +473,38 @@ body.keluar main{opacity:0;transform:translateY(-4px);transition:opacity .18s,tr
 }
 [hidden]{display:none!important}
 .profil-sampul{justify-self:stretch;align-self:stretch}
+
+/* =====================================================================
+   KELOLA PAUD/TK (kelurahan tetap)
+   ===================================================================== */
+.kel-chip-grid{display:grid;gap:10px;grid-template-columns:repeat(7,minmax(0,1fr));margin-bottom:18px}
+.kel-chip{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;border:1px solid var(--garis);background:#fff;color:var(--teks);
+  text-decoration:none!important;box-shadow:var(--shadow);transition:transform .3s var(--ease),border-color .25s,background .25s,box-shadow .3s}
+.kel-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.kel-chip b{font-size:22px;font-weight:800;color:var(--utama2);line-height:1.1}
+.kel-chip span{font-size:12.5px;color:var(--redup);font-weight:600;line-height:1.3}
+.kel-chip.on{background:linear-gradient(135deg,#0d8a76,#14a189);border-color:transparent;box-shadow:0 10px 22px -12px rgba(13,138,118,.7)}
+.kel-chip.on b,.kel-chip.on span{color:#fff}
+@media (max-width:1280px){.kel-chip-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:600px){.kel-chip-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px 16px;padding:2px 14px 6px}
+  .kel-chip{flex:0 0 auto;min-width:118px;scroll-snap-align:start}}
+.paud-grid{grid-template-columns:340px 1fr;align-items:start}
+.paud-grid .kartu{margin:0}
+.paud-tambah{position:sticky;top:20px}
+@media (max-width:1023px){.paud-grid{grid-template-columns:1fr}.paud-tambah{position:static}}
+.paud-list{display:flex;flex-direction:column;gap:10px}
+.paud-item{border:1px solid var(--garis);border-radius:14px;padding:12px 14px;background:#fff;transition:border-color .25s,box-shadow .3s}
+.paud-item:hover{box-shadow:var(--shadow)}
+.paud-item.ubah{border-color:var(--utama);box-shadow:0 0 0 3px rgba(13,138,118,.1)}
+.paud-baris{display:flex;align-items:center;gap:12px}
+.paud-info{flex:1;min-width:0}
+.paud-info b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.paud-info small{color:var(--redup);font-size:12.5px}.paud-info small svg{width:12px;height:12px;vertical-align:-1px}
+.paud-angka{display:flex;gap:8px;font-size:12.5px;color:var(--redup)}
+.paud-angka span{background:var(--abu-bg);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.paud-angka b{color:var(--teks)}
+.paud-ubah{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--garis)}
+.paud-item.ubah .paud-ubah{display:flex;animation:muncul .3s var(--ease)}
+.paud-ubah input{flex:2 1 200px}.paud-ubah select{flex:1 1 160px}
+@media (max-width:600px){.paud-baris{flex-wrap:wrap}.paud-angka{order:3;width:100%;padding-left:40px}.paud-ubah .btn{flex:1}}
+@media (max-width:600px){.grafik-kepala{flex-wrap:wrap}.grafik-kepala .cari{max-width:none!important;width:100%}}
