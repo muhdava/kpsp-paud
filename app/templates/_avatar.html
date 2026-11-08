@@ -1,0 +1,7 @@
+{% macro avatar(u, kelas='') -%}
+{%- if u and u.foto_tipe -%}
+<img class="avatar avatar-img {{ kelas }}" src="{{ url_for('foto', uid=u.id, v=u.foto_versi) }}" alt="Foto {{ u.nama }}" loading="lazy">
+{%- else -%}
+<span class="avatar {{ kelas }}">{{ (u.nama or '?')[:1]|upper }}</span>
+{%- endif -%}
+{%- endmacro %}

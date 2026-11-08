@@ -12,25 +12,25 @@
 <script>try{if(localStorage.getItem('sidebar')==='tutup')document.documentElement.classList.add('sb-tutup')}catch(e){}try{if(sessionStorage.getItem('masuk'))document.documentElement.classList.add('sudah-masuk')}catch(e){}document.documentElement.classList.add('tanpa-anim')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=13">
-<link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v=13">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=14">
+<link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v=14">
 </head>
 <body class="{{ 'ada-nav' if user else 'tanpa-nav' }}">
-{% from "_ikon.html" import ikon %}
+{% from "_ikon.html" import ikon %}{% from "_avatar.html" import avatar %}
 {% if user %}
 {% set ep = request.endpoint %}
 {% if user.peran == 'guru' %}
   {% set menu = [
     ('guru', 'Data Anak', 'rumah', ep in ('guru','anak_detail','skrining_baru','skrining_detail')),
     ('anak_form', 'Tambah Anak', 'plus', ep == 'anak_form'),
-    ('akun', 'Akun', 'user', ep == 'akun')] %}
+    ('profil', 'Profil', 'user', ep == 'profil')] %}
 {% else %}
   {% set menu = [
     ('dashboard', 'Dashboard', 'grafik', ep == 'dashboard'),
     ('data', 'Data Skrining', 'daftar', ep in ('data','skrining_detail','anak_detail')),
     ('wilayah', 'Wilayah', 'peta', ep == 'wilayah'),
     ('pengguna', 'Pengguna', 'grup', ep == 'pengguna'),
-    ('akun', 'Akun', 'user', ep == 'akun')] %}
+    ('profil', 'Profil', 'user', ep == 'profil')] %}
 {% endif %}
 
 <!-- Sidebar (desktop) -->
@@ -48,8 +48,8 @@
     {% endfor %}
   </nav>
   <div class="sb-bawah">
-    <div class="sb-user"><span class="avatar">{{ user.nama[:1]|upper }}</span>
-      <span class="sb-teks"><b>{{ user.nama }}</b><small>{{ user.paud_nama if user.peran=='guru' else 'Petugas Puskesmas' }}</small></span></div>
+    <a class="sb-user" href="{{ url_for('profil') }}" data-tip="Profil">{{ avatar(user) }}
+      <span class="sb-teks"><b>{{ user.nama }}</b><small>{{ user.jabatan or (user.paud_nama if user.peran=='guru' else 'Petugas Puskesmas') }}</small></span></a>
     <a href="{{ url_for('logout') }}" class="sb-item keluar" data-tip="Keluar"><span class="sb-ikon">{{ ikon('keluar') }}</span><span class="sb-teks">Keluar</span></a>
   </div>
 </aside>
@@ -58,7 +58,7 @@
 <header class="topbar">
   <a class="sb-brand" href="{{ url_for('index') }}"><span class="logo">{{ ikon('logo') }}</span>
     <span><b>Monitoring KPSP</b><small>{% if user.peran == 'guru' %}{{ user.paud_nama }} · {{ user.kelurahan_nama }}{% else %}Petugas Puskesmas{% endif %}</small></span></a>
-  <a class="topbar-keluar" href="{{ url_for('logout') }}" aria-label="Keluar">{{ ikon('keluar') }}</a>
+  <a class="topbar-profil" href="{{ url_for('profil') }}" aria-label="Profil">{{ avatar(user) }}</a>
 </header>
 
 <!-- Bottom nav ala TikTok (HP / tablet) -->
@@ -86,7 +86,7 @@
   {% block body %}{% endblock %}
 </main>
 </div>
-<script src="{{ url_for('static', filename='app.js') }}?v=13"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=14"></script>
 {% block script %}{% endblock %}
 </body>
 </html>

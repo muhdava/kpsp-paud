@@ -414,3 +414,62 @@ body.keluar main{opacity:0;transform:translateY(-4px);transition:opacity .18s,tr
 .form-tombol{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;padding-top:16px;border-top:1px dashed var(--garis)}
 .hapus-tengah{text-align:center;margin-top:4px}
 @media (max-width:600px){.form-tombol{flex-direction:column-reverse}.form-tombol .btn{width:100%}}
+
+/* =====================================================================
+   PROFIL & FOTO
+   ===================================================================== */
+.avatar-img{object-fit:cover;padding:0;background:#fff}
+.avatar-md{width:34px!important;height:34px!important;font-size:13px!important;margin:0!important;border-radius:50%;display:inline-grid;place-items:center;background:var(--utama-soft);color:var(--utama);font-weight:800;flex:0 0 auto}
+.avatar-xl{width:112px!important;height:112px!important;font-size:42px!important;margin:0!important;border-radius:50%;display:grid!important;place-items:center;background:var(--utama-soft);color:var(--utama);font-weight:800;border:4px solid #fff;box-shadow:0 10px 30px -12px rgba(8,60,52,.5)}
+.sb-user{text-decoration:none!important;color:#fff;border-radius:12px;transition:background .25s}
+.sb-user:hover{background:rgba(255,255,255,.09)}
+.sb-user .avatar-img{border:2px solid rgba(255,255,255,.6)}
+.topbar-profil{flex:0 0 auto;border-radius:50%;transition:transform .2s}
+.topbar-profil:active{transform:scale(.9)}
+.topbar-profil .avatar{width:38px;height:38px;margin:0;font-size:15px;border:2px solid rgba(255,255,255,.7);display:grid;place-items:center}
+
+.profil-wrap{max-width:1080px;margin:0 auto}
+.profil-hero{position:relative;padding:0 24px 22px;display:grid;grid-template-columns:auto 1fr auto;gap:8px 22px;align-items:end;overflow:hidden}
+.profil-sampul{grid-column:1/-1;height:120px;margin:0 -24px;background:linear-gradient(120deg,#0b7a69,#14a189 55%,#2fbf9f);position:relative;overflow:hidden}
+.profil-sampul::before,.profil-sampul::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12);animation:melayang 9s ease-in-out infinite}
+.profil-sampul::before{width:220px;height:220px;right:-40px;top:-90px}
+.profil-sampul::after{width:110px;height:110px;left:30%;top:20px;background:rgba(255,200,170,.18);animation-delay:-4s}
+.profil-foto-form{margin-top:-62px;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px}
+.foto-besar{position:relative;width:112px;height:112px}
+.foto-besar.ganti .avatar{animation:fotoMasuk .55s var(--ease-pop)}
+@keyframes fotoMasuk{0%{transform:scale(.6) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+.foto-kamera{position:absolute;right:2px;bottom:4px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;margin:0;
+  background:var(--aksen);color:#fff;border:3px solid #fff;box-shadow:0 6px 14px -6px rgba(0,0,0,.4);transition:transform .3s var(--ease-pop)}
+.foto-kamera:hover{transform:scale(1.12)}
+.foto-kamera svg{width:17px;height:17px}
+.foto-aksi{display:flex;gap:8px;animation:muncul .35s var(--ease)}
+.foto-aksi[hidden]{display:none}
+.profil-identitas{padding-bottom:6px;min-width:0}
+.profil-identitas h1{margin:0 0 6px;font-size:24px}
+.profil-identitas svg{width:14px;height:14px;vertical-align:-2px;color:var(--utama)}
+.profil-chip{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.profil-stat{display:flex;gap:10px;padding-bottom:6px}
+.profil-stat>div{min-width:116px;text-align:center;border:1px solid var(--garis);border-radius:14px;padding:10px 14px;background:#fbfdfc}
+.profil-stat b{display:block;font-size:24px;font-weight:800;color:var(--utama2)}
+.profil-stat span{font-size:12px;color:var(--redup)}
+.hapus-foto{position:absolute;left:24px;bottom:6px}
+.tautan-kecil{background:none;border:0;padding:4px 0;color:var(--merah);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.tautan-kecil:hover{text-decoration:underline}
+.profil-hero .hapus-foto{position:static;grid-column:1;justify-self:center;margin-top:-4px}
+.profil-grid{align-items:start;margin-top:18px}
+.profil-grid .kartu{margin:0}
+.kekuatan{height:6px;border-radius:999px;background:var(--abu-bg);overflow:hidden;margin:-4px 0 6px}
+.kekuatan i{display:block;height:100%;width:0;border-radius:999px;transition:width .4s var(--ease),background .3s}
+.profil-info-akun{margin-top:14px;text-align:center}
+.keluar-hp{display:none;width:100%;margin-top:14px;color:var(--merah)!important;box-shadow:inset 0 0 0 1.5px var(--merah)!important}
+@media (max-width:1023px){.keluar-hp{display:flex}}
+@media (max-width:820px){
+  .profil-hero{grid-template-columns:1fr;justify-items:center;text-align:center;padding:0 16px 18px}
+  .profil-sampul{margin:0 -16px;height:96px}
+  .profil-chip{justify-content:center}
+  .profil-stat{width:100%;justify-content:center}
+  .profil-stat>div{flex:1;min-width:0}
+  .profil-hero .hapus-foto{grid-column:auto}
+}
+[hidden]{display:none!important}
+.profil-sampul{justify-self:stretch;align-self:stretch}

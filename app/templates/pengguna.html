@@ -1,10 +1,10 @@
-{% extends "base.html" %}{% block body %}
+{% extends "base.html" %}{% from "_avatar.html" import avatar %}{% block body %}
 <h1>Pengguna</h1>
 <div class="kartu reveal">
   <div class="tbl-wrap"><table>
     <thead><tr><th>Nama</th><th>Username</th><th>Peran</th><th>PAUD / Kelurahan</th><th>HP</th><th>Status</th><th></th></tr></thead>
     <tbody>{% for u in rows %}<tr>
-      <td><b>{{ u.nama }}</b></td><td>{{ u.username }}</td><td>{{ 'Guru' if u.peran=='guru' else 'Puskesmas' }}</td>
+      <td><span class="nama-anak">{{ avatar(u, 'avatar-md') }}<span>{{ u.nama }}{% if u.jabatan %}<small class="sub-sel">{{ u.jabatan }}</small>{% endif %}</span></span></td><td>{{ u.username }}</td><td>{{ 'Guru' if u.peran=='guru' else 'Puskesmas' }}</td>
       <td>{{ u.paud or '—' }}{% if u.kel %}<br><span class="kecil redup">{{ u.kel }}</span>{% endif %}</td><td>{{ u.hp or '' }}</td>
       <td>{% if u.aktif %}<span class="badge hijau">Aktif</span>{% else %}<span class="badge kuning">Menunggu / nonaktif</span>{% endif %}</td>
       <td class="aksi">

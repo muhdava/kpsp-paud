@@ -93,6 +93,7 @@ def _cache_statis(resp):
         resp.headers["Cache-Control"] = "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400"
     return resp
 app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["MAX_FORM_MEMORY_SIZE"] = 2 * 1024 * 1024  # foto profil (data URL)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 SKEMA = """
@@ -105,7 +106,8 @@ CREATE TABLE IF NOT EXISTS pengguna (
   id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
   nama TEXT NOT NULL, hp TEXT, peran TEXT NOT NULL CHECK (peran IN ('guru','puskesmas')),
   paud_id INTEGER REFERENCES paud(id), aktif INTEGER NOT NULL DEFAULT 0,
-  dibuat TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  dibuat TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  email TEXT, jabatan TEXT, nip TEXT, foto BLOB, foto_tipe TEXT, foto_versi INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS anak (
   id INTEGER PRIMARY KEY, paud_id INTEGER NOT NULL REFERENCES paud(id), nama TEXT NOT NULL,
   jk TEXT NOT NULL CHECK (jk IN ('L','P')), tgl_lahir TEXT NOT NULL, nama_ortu TEXT,
@@ -123,6 +125,10 @@ CREATE TABLE IF NOT EXISTS skrining (
   dibuat TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE INDEX IF NOT EXISTS ix_skr_anak ON skrining(anak_id);
 """
+
+# kolom pengguna tanpa data foto (foto diambil terpisah lewat /foto/<id>)
+KOL_PENGGUNA = ("p.id, p.username, p.password_hash, p.nama, p.hp, p.peran, p.paud_id, p.aktif, p.dibuat, "
+                "p.email, p.jabatan, p.nip, p.foto_tipe, p.foto_versi")
 
 TINDAK_LANJUT = ["Belum ditindaklanjuti", "Edukasi / stimulasi", "Evaluasi ulang 2 minggu",
                  "Dirujuk ke Puskesmas", "Dirujuk ke RS", "Selesai"]
@@ -215,6 +221,11 @@ def init_db():
         return
     con = sqlite3.connect(DB_PATH)
     con.executescript(SKEMA)
+    ada = {r[1] for r in con.execute("PRAGMA table_info(pengguna)")}
+    for kol, tipe in [("email", "TEXT"), ("jabatan", "TEXT"), ("nip", "TEXT"), ("foto", "BLOB"),
+                      ("foto_tipe", "TEXT"), ("foto_versi", "INTEGER NOT NULL DEFAULT 0")]:
+        if kol not in ada:  # database lama: tambahkan kolom profil
+            con.execute(f"ALTER TABLE pengguna ADD COLUMN {kol} {tipe}")
     if not con.execute("SELECT 1 FROM pengguna WHERE peran='puskesmas'").fetchone():
         pw = os.environ.get("ADMIN_PASSWORD") or secrets.token_urlsafe(9)
         con.execute("INSERT INTO pengguna (username, password_hash, nama, peran, aktif) "
@@ -222,7 +233,7 @@ def init_db():
                     (generate_password_hash(pw),))
         with open(os.path.join(INSTANCE, "admin_awal.txt"), "w") as f:
             f.write(f"username: admin\npassword: {pw}\n"
-                    "Segera ganti password setelah login (menu Akun).\n")
+                    "Segera ganti password setelah login (menu Profil).\n")
         print(f"* Akun admin dibuat. Lihat {os.path.join(INSTANCE, 'admin_awal.txt')}")
     con.commit()
     con.close()
@@ -235,7 +246,7 @@ def _muat_user():
     if KONFIG_SALAH:
         return Response(f"<h1>Konfigurasi belum lengkap</h1><p>{KONFIG_SALAH}</p>", 500, mimetype="text/html")
     if "uid" in session:
-        g.user = q("SELECT p.*, pa.nama AS paud_nama, k.nama AS kelurahan_nama FROM pengguna p "
+        g.user = q(f"SELECT {KOL_PENGGUNA}, pa.nama AS paud_nama, k.nama AS kelurahan_nama FROM pengguna p "
                    "LEFT JOIN paud pa ON pa.id=p.paud_id LEFT JOIN kelurahan k ON k.id=pa.kelurahan_id "
                    "WHERE p.id=? AND p.aktif=1", (session["uid"],), satu=True)
         if not g.user:
@@ -275,7 +286,7 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        u = q("SELECT * FROM pengguna WHERE username=?", (request.form["username"].strip().lower(),), satu=True)
+        u = q(f"SELECT {KOL_PENGGUNA} FROM pengguna p WHERE p.username=?", (request.form["username"].strip().lower(),), satu=True)
         if u and check_password_hash(u["password_hash"], request.form["password"]):
             if not u["aktif"]:
                 flash("Akun Anda belum diaktifkan petugas Puskesmas.", "warn")
@@ -326,21 +337,102 @@ def daftar():
     return render_template("daftar.html", kelurahan=kel)
 
 
-@app.route("/akun", methods=["GET", "POST"])
+FOTO_MAKS = 400 * 1024  # byte, setelah dikecilkan di browser
+FOTO_TIPE = {bytes([0xFF, 0xD8, 0xFF]): "image/jpeg", bytes([0x89]) + b"PNG": "image/png", b"RIFF": "image/webp"}
+
+
+def _baca_foto(data_url):
+    """Data URL (hasil kompres di browser) -> (bytes, mimetype); hanya JPEG/PNG/WebP."""
+    import base64
+    import binascii
+    if not data_url or "," not in data_url:
+        return None, "Foto tidak terbaca."
+    kepala, isi = data_url.split(",", 1)
+    try:
+        b = base64.b64decode(isi, validate=True)
+    except (binascii.Error, ValueError):
+        return None, "Foto tidak terbaca."
+    if len(b) > FOTO_MAKS:
+        return None, "Ukuran foto terlalu besar."
+    for awal, tipe in FOTO_TIPE.items():
+        if b.startswith(awal) and (tipe != "image/webp" or b[8:12] == b"WEBP"):
+            return b, tipe
+    return None, "Format foto harus JPG, PNG, atau WebP."
+
+
+@app.route("/akun")
 @perlu_login()
 def akun():
+    return redirect(url_for("profil"))
+
+
+@app.route("/profil", methods=["GET", "POST"])
+@perlu_login()
+def profil():
     if request.method == "POST":
-        if not check_password_hash(g.user["password_hash"], request.form["lama"]):
-            flash("Password lama salah.", "err")
-        elif len(request.form["baru"]) < 6:
-            flash("Password baru minimal 6 karakter.", "err")
-        else:
-            db().execute("UPDATE pengguna SET password_hash=? WHERE id=?",
-                         (generate_password_hash(request.form["baru"]), g.user["id"]))
+        f = request.form
+        aksi = f.get("aksi")
+        if aksi == "info":
+            nama = " ".join(f.get("nama", "").split())
+            email = f.get("email", "").strip()
+            if not nama:
+                flash("Nama wajib diisi.", "err")
+            elif email and ("@" not in email or "." not in email.split("@")[-1] or len(email) > 120):
+                flash("Format email tidak valid.", "err")
+            else:
+                db().execute("UPDATE pengguna SET nama=?, hp=?, email=?, jabatan=?, nip=? WHERE id=?",
+                             (nama[:100], f.get("hp", "").strip()[:30], email or None,
+                              f.get("jabatan", "").strip()[:80] or None, f.get("nip", "").strip()[:30] or None,
+                              g.user["id"]))
+                db().commit()
+                flash("Informasi profil disimpan.", "ok")
+        elif aksi == "foto":
+            b, tipe = _baca_foto(f.get("foto_data"))
+            if not b:
+                flash(tipe, "err")
+            else:
+                db().execute("UPDATE pengguna SET foto=?, foto_tipe=?, foto_versi=foto_versi+1 WHERE id=?",
+                             (b, tipe, g.user["id"]))
+                db().commit()
+                flash("Foto profil diperbarui.", "ok")
+        elif aksi == "hapus_foto":
+            db().execute("UPDATE pengguna SET foto=NULL, foto_tipe=NULL, foto_versi=foto_versi+1 WHERE id=?",
+                         (g.user["id"],))
             db().commit()
-            flash("Password diganti.", "ok")
-            return redirect(url_for("index"))
-    return render_template("akun.html")
+            flash("Foto profil dihapus.", "ok")
+        elif aksi == "password":
+            if not check_password_hash(g.user["password_hash"], f.get("lama", "")):
+                flash("Password lama salah.", "err")
+            elif len(f.get("baru", "")) < 6:
+                flash("Password baru minimal 6 karakter.", "err")
+            elif f.get("baru") != f.get("ulang"):
+                flash("Konfirmasi password baru tidak sama.", "err")
+            else:
+                db().execute("UPDATE pengguna SET password_hash=? WHERE id=?",
+                             (generate_password_hash(f["baru"]), g.user["id"]))
+                db().commit()
+                flash("Password diganti.", "ok")
+        return redirect(url_for("profil"))
+    stat = None
+    if g.user["peran"] == "guru":
+        stat = q("SELECT (SELECT COUNT(*) FROM anak WHERE paud_id=?) anak, "
+                 "(SELECT COUNT(*) FROM skrining WHERE dibuat_oleh=?) skrining", (g.user["paud_id"], g.user["id"]), satu=True)
+    else:
+        stat = q("SELECT (SELECT COUNT(*) FROM skrining WHERE diverifikasi_oleh=?) tindak, "
+                 "(SELECT COUNT(*) FROM pengguna WHERE peran='guru' AND aktif=1) guru", (g.user["id"],), satu=True)
+    return render_template("profil.html", stat=stat)
+
+
+@app.route("/foto/<int:uid>")
+@perlu_login()
+def foto(uid):
+    r = q("SELECT foto, foto_tipe FROM pengguna WHERE id=?", (uid,), satu=True)
+    if not r or not r["foto"]:
+        abort(404)
+    resp = Response(bytes(r["foto"]), mimetype=r["foto_tipe"] or "image/jpeg")
+    resp.headers["Cache-Control"] = "private, max-age=31536000, immutable"  # URL memakai ?v=versi
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
 
 
 # ---------------------------------------------------------------- helpers
@@ -706,7 +798,7 @@ def pengguna():
                 flash("Akun petugas ditambahkan.", "ok")
         db().commit()
         return redirect(url_for("pengguna"))
-    rows = q("SELECT p.*, pa.nama AS paud, k.nama AS kel FROM pengguna p LEFT JOIN paud pa ON pa.id=p.paud_id "
+    rows = q(f"SELECT {KOL_PENGGUNA}, pa.nama AS paud, k.nama AS kel FROM pengguna p LEFT JOIN paud pa ON pa.id=p.paud_id "
              "LEFT JOIN kelurahan k ON k.id=pa.kelurahan_id ORDER BY p.aktif, p.peran DESC, p.nama")
     return render_template("pengguna.html", rows=rows)
 

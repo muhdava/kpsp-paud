@@ -1,0 +1,123 @@
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% from "_avatar.html" import avatar %}
+{% block title %}Profil · Monitoring KPSP{% endblock %}
+{% block body %}
+<div class="profil-wrap">
+
+  <!-- Kartu identitas + foto -->
+  <div class="kartu profil-hero reveal">
+    <div class="profil-sampul"></div>
+    <form method="post" id="fFoto" class="profil-foto-form">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="aksi" value="foto">
+      <input type="hidden" name="foto_data" id="fotoData">
+      <div class="foto-besar" id="fotoBesar">
+        {{ avatar(user, 'avatar-xl') }}
+        <img id="fotoPratinjau" class="avatar avatar-img avatar-xl" alt="Pratinjau foto" hidden>
+        <label class="foto-kamera" for="fotoInput" title="Ganti foto profil" aria-label="Ganti foto profil">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        </label>
+        <input type="file" id="fotoInput" accept="image/jpeg,image/png,image/webp" hidden>
+      </div>
+      <div class="foto-aksi" id="fotoAksi" hidden>
+        <button type="button" class="btn alt kecil" id="fotoBatal">Batal</button>
+        <button class="btn kecil">{{ ikon('cek') }} Simpan foto</button>
+      </div>
+    </form>
+    <div class="profil-identitas">
+      <h1>{{ user.nama }}</h1>
+      <div class="profil-chip">
+        <span class="badge hijau">{{ 'Guru PAUD/TK' if user.peran=='guru' else 'Petugas Puskesmas' }}</span>
+        {% if user.jabatan %}<span class="badge abu">{{ user.jabatan }}</span>{% endif %}
+        <span class="redup kecil">@{{ user.username }}</span>
+      </div>
+      {% if user.peran == 'guru' %}<p class="redup kecil" style="margin:8px 0 0">{{ ikon('sekolah') }} {{ user.paud_nama }} · Kelurahan {{ user.kelurahan_nama }}</p>{% endif %}
+    </div>
+    <div class="profil-stat">
+      {% if user.peran == 'guru' %}
+        <div><b data-hitung="{{ stat.anak }}">0</b><span>Anak di PAUD</span></div>
+        <div><b data-hitung="{{ stat.skrining }}">0</b><span>Skrining saya</span></div>
+      {% else %}
+        <div><b data-hitung="{{ stat.tindak }}">0</b><span>Tindak lanjut saya</span></div>
+        <div><b data-hitung="{{ stat.guru }}">0</b><span>Guru aktif</span></div>
+      {% endif %}
+    </div>
+    {% if user.foto_tipe %}
+    <form method="post" class="hapus-foto" onsubmit="return confirm('Hapus foto profil?')">
+      <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="aksi" value="hapus_foto">
+      <button class="tautan-kecil">Hapus foto</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="grid g2 profil-grid">
+    <!-- Informasi akun -->
+    <div class="kartu reveal">
+      <h2><span class="ikon-h">{{ ikon('user') }}</span>Informasi akun</h2>
+      <form method="post">
+        <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="aksi" value="info">
+        <div class="field"><label>Nama lengkap</label><input name="nama" required maxlength="100" value="{{ user.nama }}"></div>
+        <div class="form-row">
+          <div><label>Username</label><div class="input-ikon">{{ ikon('user') }}<input value="{{ user.username }}" readonly tabindex="-1"></div></div>
+          <div><label>No. HP / WhatsApp</label><input name="hp" inputmode="tel" maxlength="30" value="{{ user.hp or '' }}" placeholder="08…"></div>
+        </div>
+        <div class="field"><label>Email (opsional)</label><input name="email" type="email" maxlength="120" value="{{ user.email or '' }}" placeholder="nama@contoh.com"></div>
+        <div class="form-row">
+          <div><label>Jabatan (opsional)</label><input name="jabatan" maxlength="80" value="{{ user.jabatan or '' }}" placeholder="{{ 'mis. Guru kelas B' if user.peran=='guru' else 'mis. Bidan / Nutrisionis' }}"></div>
+          <div><label>NIP / NIK (opsional)</label><input name="nip" maxlength="30" inputmode="numeric" value="{{ user.nip or '' }}"></div>
+        </div>
+        {% if user.peran == 'guru' %}
+        <div class="form-row">
+          <div><label>PAUD / TK</label><div class="input-ikon">{{ ikon('sekolah') }}<input value="{{ user.paud_nama }}" readonly tabindex="-1"></div></div>
+          <div><label>Kelurahan</label><div class="input-ikon">{{ ikon('peta') }}<input value="{{ user.kelurahan_nama }}" readonly tabindex="-1"></div></div>
+        </div>
+        <p class="kecil redup" style="margin-top:-4px">Pindah PAUD/TK? Hubungi petugas Puskesmas.</p>
+        {% endif %}
+        <div class="form-tombol"><button class="btn">{{ ikon('cek') }} Simpan informasi</button></div>
+      </form>
+    </div>
+
+    <!-- Keamanan -->
+    <div class="kartu reveal">
+      <h2><span class="ikon-h">{{ ikon('mata') }}</span>Ganti password</h2>
+      <form method="post">
+        <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="aksi" value="password">
+        <div class="field"><label>Password lama</label><div class="pw"><input id="pwLama" type="password" name="lama" required autocomplete="current-password"><button type="button" data-lihat="pwLama" aria-label="Tampilkan">{{ ikon('mata') }}</button></div></div>
+        <div class="field"><label>Password baru (min. 6)</label><div class="pw"><input id="pwBaru" type="password" name="baru" required minlength="6" autocomplete="new-password"><button type="button" data-lihat="pwBaru" aria-label="Tampilkan">{{ ikon('mata') }}</button></div></div>
+        <div class="field"><label>Ulangi password baru</label><input type="password" name="ulang" required minlength="6" autocomplete="new-password"></div>
+        <div class="kekuatan" aria-hidden="true"><i id="pwBar"></i></div>
+        <div class="form-tombol"><button class="btn">{{ ikon('cek') }} Ganti password</button></div>
+      </form>
+      <div class="profil-info-akun kecil redup">Akun dibuat {{ user.dibuat|tgl }}</div>
+      <a class="btn alt keluar-hp" href="{{ url_for('logout') }}">{{ ikon('keluar') }} Keluar dari akun</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block script %}<script>
+(function(){
+  const inp=document.getElementById('fotoInput'),prev=document.getElementById('fotoPratinjau'),data=document.getElementById('fotoData'),
+        aksi=document.getElementById('fotoAksi'),besar=document.getElementById('fotoBesar'),asli=besar.querySelector('.avatar:not(#fotoPratinjau)');
+  inp.addEventListener('change',()=>{
+    const f=inp.files[0];if(!f)return;
+    if(!/^image\/(jpeg|png|webp)$/.test(f.type)){alert('Pilih foto JPG, PNG, atau WebP.');inp.value='';return}
+    if(f.size>15*1024*1024){alert('Ukuran foto maksimal 15 MB.');inp.value='';return}
+    const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{
+      // potong persegi di tengah lalu kecilkan ke 320x320 JPEG
+      const s=Math.min(img.naturalWidth,img.naturalHeight),c=document.createElement('canvas');c.width=c.height=320;
+      const x=c.getContext('2d');x.imageSmoothingQuality='high';
+      x.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,320,320);
+      URL.revokeObjectURL(url);
+      const d=c.toDataURL('image/jpeg',0.86);data.value=d;prev.src=d;prev.hidden=false;if(asli)asli.hidden=true;
+      aksi.hidden=false;besar.classList.remove('ganti');void besar.offsetWidth;besar.classList.add('ganti');
+    };
+    img.onerror=()=>{alert('Foto tidak bisa dibaca.');URL.revokeObjectURL(url)};
+    img.src=url;
+  });
+  document.getElementById('fotoBatal').onclick=()=>{inp.value='';data.value='';prev.hidden=true;if(asli)asli.hidden=false;aksi.hidden=true};
+  // indikator kekuatan password
+  const b=document.getElementById('pwBaru'),bar=document.getElementById('pwBar');
+  b.addEventListener('input',()=>{const v=b.value;let n=0;if(v.length>=6)n++;if(v.length>=10)n++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))n++;if(/\d/.test(v)&&/[^\w]/.test(v))n++;
+    bar.style.width=(v?Math.max(n,1)*25:0)+'%';bar.style.background=['#c8382b','#c8382b','#e09a12','#16884a','#16884a'][n]});
+})();
+</script>{% endblock %}
