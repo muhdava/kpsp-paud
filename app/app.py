@@ -691,7 +691,8 @@ def e403(e):
 
 @app.errorhandler(404)
 def e404(e):
-    return render_template("pesan.html", judul="Tidak ditemukan", pesan="Halaman atau data tidak ditemukan."), 404
+    return render_template("pesan.html", judul="Tidak ditemukan",
+                           pesan=f"Halaman atau data tidak ditemukan ({request.script_root}{request.path})."), 404
 
 
 init_db()
