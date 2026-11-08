@@ -16,11 +16,21 @@ import gizi
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 INSTANCE = os.path.join(BASE, "instance")
-os.makedirs(INSTANCE, exist_ok=True)
 DB_PATH = os.environ.get("KPSP_DB", os.path.join(INSTANCE, "kpsp.db"))
+# Bila DATABASE_URL diisi (mis. Supabase/Postgres) dipakai Postgres; jika tidak, SQLite lokal.
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+PAKAI_PG = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+if PAKAI_PG:
+    import psycopg
+    from psycopg.rows import dict_row
+    IntegrityError = (sqlite3.IntegrityError, psycopg.IntegrityError)
+else:
+    IntegrityError = (sqlite3.IntegrityError,)
+    os.makedirs(INSTANCE, exist_ok=True)
 
 
 def _secret_key():
+    os.makedirs(INSTANCE, exist_ok=True)
     p = os.path.join(INSTANCE, "secret_key")
     if not os.path.exists(p):
         with open(p, "w") as f:
@@ -65,11 +75,37 @@ TINDAK_LANJUT = ["Belum ditindaklanjuti", "Edukasi / stimulasi", "Evaluasi ulang
 
 
 # ---------------------------------------------------------------- db
+class Koneksi:
+    """Pembungkus tipis agar kode yang sama jalan di SQLite (lokal) dan Postgres (Supabase)."""
+
+    def __init__(self):
+        if PAKAI_PG:
+            self.con = psycopg.connect(DATABASE_URL, row_factory=dict_row, prepare_threshold=None,
+                                       connect_timeout=10)
+        else:
+            self.con = sqlite3.connect(DB_PATH)
+            self.con.row_factory = lambda c, r: {d[0]: v for d, v in zip(c.description, r)}
+            self.con.execute("PRAGMA foreign_keys = ON")
+
+    def execute(self, sql, args=()):
+        if PAKAI_PG:
+            sql = sql.replace("?", "%s")
+        return self.con.execute(sql, args)
+
+    def sisip(self, sql, args=()):
+        """INSERT dan kembalikan id baris baru."""
+        return self.execute(sql + " RETURNING id", args).fetchone()["id"]
+
+    def commit(self):
+        self.con.commit()
+
+    def close(self):
+        self.con.close()
+
+
 def db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
+        g.db = Koneksi()
     return g.db
 
 
@@ -87,6 +123,8 @@ def q(sql, args=(), satu=False):
 
 
 def init_db():
+    if PAKAI_PG:  # skema & admin awal Postgres dibuat lewat migrasi Supabase
+        return
     con = sqlite3.connect(DB_PATH)
     con.executescript(SKEMA)
     if not con.execute("SELECT 1 FROM pengguna WHERE peran='puskesmas'").fetchone():
@@ -186,8 +224,8 @@ def daftar():
             if paud:
                 pid = paud["id"]
             else:
-                pid = db().execute("INSERT INTO paud (nama, kelurahan_id) VALUES (?,?)",
-                                   (nama_paud, f["kelurahan_id"])).lastrowid
+                pid = db().sisip("INSERT INTO paud (nama, kelurahan_id) VALUES (?,?)",
+                                 (nama_paud, f["kelurahan_id"]))
             db().execute("INSERT INTO pengguna (username,password_hash,nama,hp,peran,paud_id,aktif) "
                          "VALUES (?,?,?,?, 'guru', ?, 0)",
                          (username, generate_password_hash(f["password"]), f["nama"].strip(),
@@ -328,8 +366,8 @@ def anak_form(aid=None):
                 db().execute("UPDATE anak SET nama=?, jk=?, tgl_lahir=?, nama_ortu=? WHERE id=?", (*val, a["id"]))
                 new_id = a["id"]
             else:
-                new_id = db().execute("INSERT INTO anak (nama,jk,tgl_lahir,nama_ortu,paud_id,dibuat_oleh) "
-                                      "VALUES (?,?,?,?,?,?)", (*val, g.user["paud_id"], g.user["id"])).lastrowid
+                new_id = db().sisip("INSERT INTO anak (nama,jk,tgl_lahir,nama_ortu,paud_id,dibuat_oleh) "
+                                    "VALUES (?,?,?,?,?,?)", (*val, g.user["paud_id"], g.user["id"]))
             db().commit()
             flash("Data anak disimpan.", "ok")
             return redirect(url_for("skrining_baru", aid=new_id) if not a else url_for("anak_detail", aid=new_id))
@@ -383,7 +421,7 @@ def skrining_baru(aid):
         z = lambda k: (gz.get(k) or {}).get("z")
         st = lambda k: (gz.get(k) or {}).get("status")
         num = lambda k: gizi._f(f.get(k))
-        sid = db().execute(
+        sid = db().sisip(
             """INSERT INTO skrining (anak_id,tgl_periksa,umur_teks,umur_bulan,kpsp_umur,jawaban,skor,hasil_kpsp,
                bb,tb,cara_ukur,lk,lila,imt,z_bbu,z_tbu,z_bbtb,z_imtu,z_lku,st_bbu,st_tbu,st_bbtb,st_imtu,st_lku,
                st_lila,status_gizi,masalah_gizi,catatan_guru,tindak_lanjut,dibuat_oleh)
@@ -393,7 +431,7 @@ def skrining_baru(aid):
              z("bbu"), z("tbu"), z("bbtb"), z("imtu"), z("lku"),
              st("bbu"), st("tbu"), st("bbtb"), st("imtu"), st("lku"), st("lila"),
              gz.get("status_gizi"), int(gizi.ada_masalah_gizi(gz)) if gz else 0,
-             f.get("catatan_guru", "").strip(), "Belum ditindaklanjuti", g.user["id"])).lastrowid
+             f.get("catatan_guru", "").strip(), "Belum ditindaklanjuti", g.user["id"]))
         db().commit()
         flash("Hasil skrining disimpan.", "ok")
         return redirect(url_for("skrining_detail", sid=sid))
@@ -460,7 +498,7 @@ def _filter():
     if f.get("tl"):
         w.append("s.tindak_lanjut=?"); p.append(f["tl"])
     if f.get("cari"):
-        w.append("a.nama LIKE ?"); p.append(f"%{f['cari']}%")
+        w.append("lower(a.nama) LIKE lower(?)"); p.append(f"%{f['cari']}%")
     if f.get("terakhir", "1") == "1":
         w.append("s.id = (SELECT id FROM skrining WHERE anak_id=a.id ORDER BY tgl_periksa DESC, id DESC LIMIT 1)")
     return " AND ".join(w), p
@@ -592,7 +630,7 @@ def wilayah():
             if f.get("aksi") == "tambah_kel":
                 for nama in f["nama"].splitlines():
                     if nama.strip():
-                        db().execute("INSERT OR IGNORE INTO kelurahan (nama) VALUES (?)", (" ".join(nama.split()),))
+                        db().execute("INSERT INTO kelurahan (nama) VALUES (?) ON CONFLICT DO NOTHING", (" ".join(nama.split()),))
             elif f.get("aksi") == "ubah_kel":
                 db().execute("UPDATE kelurahan SET nama=? WHERE id=?", (" ".join(f["nama"].split()), f["id"]))
             elif f.get("aksi") == "hapus_kel":
@@ -606,7 +644,8 @@ def wilayah():
             elif f.get("aksi") == "hapus_paud":
                 db().execute("DELETE FROM paud WHERE id=?", (f["id"],))
             db().commit()
-        except sqlite3.IntegrityError:
+        except IntegrityError:
+            db().con.rollback()
             flash("Tidak bisa: nama sudah ada atau data masih dipakai (ada PAUD/anak/guru terkait).", "err")
         return redirect(url_for("wilayah"))
     kel = q("SELECT k.*, (SELECT COUNT(*) FROM paud WHERE kelurahan_id=k.id) n FROM kelurahan k ORDER BY nama")

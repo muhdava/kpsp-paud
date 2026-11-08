@@ -32,3 +32,9 @@ yang sama: `HOST=0.0.0.0 python app/app.py`.
 - `gizi.py` – hitung umur, pilih KPSP, z-score & klasifikasi
 - `data/kpsp.json` – pertanyaan KPSP dari Buku Bagan SDIDTK 2022; `data/who_lms.json` – tabel LMS WHO
 - `static/kpsp/` – gambar halaman KPSP dari PDF
+
+## Deploy (Vercel + Supabase)
+- Database: Supabase project `kpsp-paud`, tabel di schema `kpsp`, diakses role `kpsp_app` (hanya schema itu).
+- Bila env `DATABASE_URL` (postgresql://…) diisi, app memakai Postgres; tanpa itu memakai SQLite lokal.
+- Vercel: `api/index.py` memuat Flask app, `vercel.json` mengarahkan semua URL ke sana.
+- Environment Variables di Vercel: `DATABASE_URL` (pooler Supabase, port 6543) dan `SECRET_KEY`.

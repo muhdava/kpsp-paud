@@ -1,0 +1,5 @@
+app/instance/
+*.pdf
+*.db
+__pycache__/
+.claude/
