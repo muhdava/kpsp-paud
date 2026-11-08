@@ -26,6 +26,13 @@ if PAKAI_PG:
     IntegrityError = (sqlite3.IntegrityError, psycopg.IntegrityError)
 else:
     IntegrityError = (sqlite3.IntegrityError,)
+# Di Vercel sistem file read-only: wajib pakai Postgres (DATABASE_URL)
+DI_VERCEL = bool(os.environ.get("VERCEL"))
+KONFIG_SALAH = None
+if DI_VERCEL and not PAKAI_PG:
+    KONFIG_SALAH = ("Environment variable DATABASE_URL belum diisi (atau belum diterapkan) di Vercel. "
+                    "Isi di Project Settings > Environment Variables, lalu lakukan Redeploy.")
+elif not PAKAI_PG:
     os.makedirs(INSTANCE, exist_ok=True)
 
 
@@ -39,7 +46,10 @@ def _secret_key():
 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or _secret_key()
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or (secrets.token_hex(32) if DI_VERCEL else _secret_key())
+app.config["SESSION_COOKIE_SECURE"] = DI_VERCEL
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 SKEMA = """
 CREATE TABLE IF NOT EXISTS kelurahan (
@@ -123,7 +133,7 @@ def q(sql, args=(), satu=False):
 
 
 def init_db():
-    if PAKAI_PG:  # skema & admin awal Postgres dibuat lewat migrasi Supabase
+    if PAKAI_PG or KONFIG_SALAH:  # skema & admin awal Postgres dibuat lewat migrasi Supabase
         return
     con = sqlite3.connect(DB_PATH)
     con.executescript(SKEMA)
@@ -144,6 +154,8 @@ def init_db():
 @app.before_request
 def _muat_user():
     g.user = None
+    if KONFIG_SALAH:
+        return Response(f"<h1>Konfigurasi belum lengkap</h1><p>{KONFIG_SALAH}</p>", 500, mimetype="text/html")
     if "uid" in session:
         g.user = q("SELECT p.*, pa.nama AS paud_nama, k.nama AS kelurahan_nama FROM pengguna p "
                    "LEFT JOIN paud pa ON pa.id=p.paud_id LEFT JOIN kelurahan k ON k.id=pa.kelurahan_id "
