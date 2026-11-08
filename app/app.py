@@ -745,6 +745,12 @@ def wilayah():
     return render_template("wilayah.html", kel=kel, paud=paud)
 
 
+@app.route("/favicon.ico")
+def favicon():  # di Vercel dilayani langsung dari public/favicon.ico
+    from flask import send_from_directory
+    return send_from_directory(os.path.join(BASE, "..", "public"), "favicon.ico", mimetype="image/x-icon")
+
+
 @app.errorhandler(403)
 def e403(e):
     return render_template("pesan.html", judul="Akses ditolak", pesan="Anda tidak punya akses ke halaman ini."), 403

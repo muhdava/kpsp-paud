@@ -1,0 +1,12 @@
+{
+  "name": "Monitoring KPSP PAUD",
+  "short_name": "KPSP PAUD",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f6f5",
+  "theme_color": "#0d8a76",
+  "icons": [
+    { "src": "/static/ikon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/static/ikon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
