@@ -399,3 +399,18 @@ body.keluar main{opacity:0;transform:translateY(-4px);transition:opacity .18s,tr
 @media (max-width:340px){.ubin-grid{grid-template-columns:1fr}}
 @media (min-width:341px){.ubin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.tbl-hp .nama-anak{justify-content:flex-start!important}}
+
+/* ---- form di tengah (tambah / ubah anak) ---- */
+.form-tengah{max-width:640px;margin:0 auto}
+.form-tengah-kepala{text-align:center;margin:4px 0 18px}
+.form-tengah-kepala h1{margin:10px 0 4px}
+.form-tengah-kepala p{margin:0}
+.ikon-besar{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:18px;background:var(--utama-soft);color:var(--utama);animation:muncul .5s var(--ease) both}
+.ikon-besar svg{width:28px;height:28px}
+.input-ikon{position:relative}
+.input-ikon svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--utama)}
+.input-ikon input{padding-left:38px;background:var(--bg);border-color:var(--garis);color:var(--teks);font-weight:600;cursor:default}
+.input-ikon input:focus{box-shadow:none;border-color:var(--garis)}
+.form-tombol{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;padding-top:16px;border-top:1px dashed var(--garis)}
+.hapus-tengah{text-align:center;margin-top:4px}
+@media (max-width:600px){.form-tombol{flex-direction:column-reverse}.form-tombol .btn{width:100%}}
