@@ -368,5 +368,34 @@ body.keluar main{opacity:0;transform:translateY(-4px);transition:opacity .18s,tr
 .tbl-jawaban .no-soal{width:34px;font-weight:800;color:var(--utama)}
 .catatan{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--aksen-soft)}
 .catatan p{margin:4px 0 0}
-@media (max-width:420px){.ubin-grid{grid-template-columns:1fr}}
+
 .info-grid.info-6{grid-template-columns:repeat(3,minmax(0,1fr))}@media (max-width:600px){.info-grid.info-6{grid-template-columns:repeat(2,minmax(0,1fr))}.info-grid.info-6>div:last-child{grid-column:auto}}
+
+/* =====================================================================
+   HP: grafik label di atas bilah, tabel otomatis jadi kartu
+   ===================================================================== */
+@media (max-width:600px){
+  .bar-row{grid-template-columns:1fr auto;grid-template-areas:"label nilai" "bar bar";gap:4px 10px;margin:10px 0}
+  .bar-label{grid-area:label;white-space:normal}
+  .bar-nilai{grid-area:nilai}
+  .bar-row .bar{grid-area:bar;height:10px}
+
+  .tbl-wrap:has(.tbl-kartu){border:0;overflow:visible}
+  .tbl-kartu{min-width:0!important}
+  .tbl-kartu thead{display:none}
+  .tbl-kartu tbody{display:grid;gap:10px}
+  .tbl-kartu tr{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;border:1px solid var(--garis);border-radius:14px;padding:14px;background:#fff;box-shadow:0 1px 2px rgba(16,40,34,.04)}
+  .tbl-kartu td{border:0;padding:0;text-align:left!important;white-space:normal!important;font-size:13px;min-width:0}
+  .tbl-kartu td:first-child{grid-column:1/-1;font-size:15px;padding-bottom:8px;border-bottom:1px dashed var(--garis)}
+  .tbl-kartu td[data-label]:not(:first-child)::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;color:var(--redup);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .tbl-kartu td:empty{display:none}
+  .tbl-kartu td.td-lebar,.tbl-kartu td:last-child:has(.btn){grid-column:1/-1}
+  .tbl-kartu td .btn{width:100%}
+  .tbl-kartu .nama-anak{justify-content:flex-start!important}
+  .tbl-kartu td[colspan]{grid-column:1/-1;border:0}
+  .tbl-kartu tr:has(td[colspan]){padding:0;border:0;box-shadow:none;background:none}
+  .tbl-kartu .aksi,.tbl-kartu form.aksi{justify-content:flex-start!important}
+}
+@media (max-width:340px){.ubin-grid{grid-template-columns:1fr}}
+@media (min-width:341px){.ubin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.tbl-hp .nama-anak{justify-content:flex-start!important}}

@@ -143,3 +143,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('pointerover',e=>pre(e.target.closest&&e.target.closest('a[href]')),{passive:true});
   document.addEventListener('touchstart',e=>pre(e.target.closest&&e.target.closest('a[href]')),{passive:true});
 })();
+
+/* ---------- Tabel -> kartu di HP: beri label kolom otomatis ---------- */
+document.querySelectorAll('.tbl-wrap table').forEach(t=>{
+  if(t.classList.contains('tbl-hp'))return;
+  const h=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+  if(!h.length)return;
+  t.classList.add('tbl-kartu');
+  t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{if(h[i]&&!td.hasAttribute('data-label'))td.setAttribute('data-label',h[i])}));
+});

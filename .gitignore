@@ -7,3 +7,6 @@ __pycache__/
 .claude/
 # PDF sumber (besar, tidak dibutuhkan aplikasi; gambar KPSP sudah ada di app/static/kpsp)
 *.pdf
+
+# tangkapan layar lokal
+tampilan-hp/
