@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block body %}
+{% extends "base.html" %}{% from "_ikon.html" import ikon %}{% block main_kelas %}lebar{% endblock %}{% block body %}
 <div class="kepala">
   <div><h1>Data skrining</h1><div class="redup kecil">Hasil KPSP & status gizi seluruh PAUD/TK</div></div>
   <a class="btn alt" href="{{ request.full_path }}{{ '&' if '?' in request.full_path else '?' }}format=csv">{{ ikon('unduh') }} Unduh CSV (Excel)</a>
@@ -7,7 +7,7 @@
 <div class="kartu reveal">
   <div class="grafik-kepala" style="margin-bottom:14px"><h2><span class="ikon-h">{{ ikon('daftar') }}</span>Daftar hasil skrining</h2><span class="badge abu">{{ rows|length }} data</span></div>
   <div class="tbl-wrap"><table class="tbl-data">
-    <thead><tr><th>Anak</th><th>PAUD / Kelurahan</th><th>Tgl periksa</th><th>KPSP</th><th>BB / TB</th><th>Status gizi</th><th>TB/U</th><th>LK</th><th>LiLA</th><th>Tindak lanjut</th></tr></thead>
+    <thead><tr><th>Anak</th><th>PAUD / Kelurahan</th><th>Tgl periksa</th><th>KPSP</th><th>BB / TB</th><th>Status gizi</th><th>TB/U</th><th>LK / LiLA</th><th>Tindak lanjut</th></tr></thead>
     <tbody>{% for r in rows %}<tr class="baris-link" data-href="{{ url_for('skrining_detail', sid=r.id) }}">
       <td><a class="nama-anak" href="{{ url_for('skrining_detail', sid=r.id) }}"><span class="ava {{ r.jk }}">{{ r.anak[:1]|upper }}</span><span>{{ r.anak }}<small class="sub-sel">{{ r.umur_teks }}</small></span></a></td>
       <td>{{ r.paud }}<small class="sub-sel">{{ r.kelurahan }}</small></td>
@@ -16,10 +16,13 @@
       <td>{{ r.bb or '—' }} kg<small class="sub-sel">{{ r.tb or '—' }} cm</small></td>
       <td>{% if r.status_gizi %}<span class="badge {{ r.status_gizi|warna }}">{{ r.status_gizi }}</span>{% else %}<span class="redup">—</span>{% endif %}</td>
       <td>{% if r.st_tbu %}<span class="badge {{ r.st_tbu|warna }}">{{ r.st_tbu }}</span>{% else %}<span class="redup">—</span>{% endif %}</td>
-      <td>{% if r.st_lku and r.z_lku is not none %}<span class="badge {{ r.st_lku|warna }}">{{ r.st_lku }}</span>{% else %}<span class="redup">—</span>{% endif %}</td>
-      <td>{% if r.st_lila and not r.st_lila.startswith('Tidak') %}<span class="badge {{ r.st_lila|warna }}">{{ r.st_lila }}</span>{% else %}<span class="redup">—</span>{% endif %}</td>
+      <td><div class="badge-tumpuk">
+        {% if r.st_lku and r.z_lku is not none %}<span class="badge {{ r.st_lku|warna }}" title="Lingkar kepala">LK: {{ r.st_lku }}</span>{% endif %}
+        {% if r.st_lila and not r.st_lila.startswith('Tidak') %}<span class="badge {{ r.st_lila|warna }}" title="Lingkar lengan atas">LiLA: {{ r.st_lila }}</span>{% endif %}
+        {% if not (r.st_lku and r.z_lku is not none) and not (r.st_lila and not r.st_lila.startswith('Tidak')) %}<span class="redup">—</span>{% endif %}
+      </div></td>
       <td><span class="badge {{ r.tindak_lanjut|warna }}">{{ r.tindak_lanjut }}</span></td></tr>
-    {% else %}<tr><td colspan="10"><div class="kosong">{{ ikon('kosong') }}<p>Tidak ada data sesuai filter.</p></div></td></tr>{% endfor %}</tbody>
+    {% else %}<tr><td colspan="9"><div class="kosong">{{ ikon('kosong') }}<p>Tidak ada data sesuai filter.</p></div></td></tr>{% endfor %}</tbody>
   </table></div>
 </div>
 {% endblock %}

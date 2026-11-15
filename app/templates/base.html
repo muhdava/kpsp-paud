@@ -12,8 +12,8 @@
 <script>try{if(localStorage.getItem('sidebar')==='tutup')document.documentElement.classList.add('sb-tutup')}catch(e){}try{if(sessionStorage.getItem('masuk'))document.documentElement.classList.add('sudah-masuk')}catch(e){}document.documentElement.classList.add('tanpa-anim')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=15">
-<link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v=15">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=16">
+<link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v=16">
 </head>
 <body class="{{ 'ada-nav' if user else 'tanpa-nav' }}">
 {% from "_ikon.html" import ikon %}{% from "_avatar.html" import avatar %}
@@ -81,12 +81,12 @@
 {% endif %}
 
 <div class="konten">
-<main>
+<main class="{% block main_kelas %}{% endblock %}">
   {% for kat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ kat }}" role="status">{{ msg }}</div>{% endfor %}
   {% block body %}{% endblock %}
 </main>
 </div>
-<script src="{{ url_for('static', filename='app.js') }}?v=15"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=16"></script>
 {% block script %}{% endblock %}
 </body>
 </html>
