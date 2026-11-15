@@ -537,3 +537,7 @@ main.lebar{max-width:1640px}
 .ubin,.gz>div{min-width:0}
 .ubin .badge,.gz .badge{white-space:normal;max-width:100%;text-align:left;line-height:1.3;align-items:flex-start}
 .ubin .badge::before,.gz .badge::before{margin-top:5px;flex:0 0 auto}
+
+/* ---- kolom nama (kolom pertama) rata kiri di semua tabel ---- */
+.tbl-nama th:first-child,.tbl-nama td:first-child{text-align:left!important;padding-left:18px}
+.tbl-nama td:first-child .nama-anak{justify-content:flex-start!important}

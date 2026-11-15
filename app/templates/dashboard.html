@@ -43,7 +43,7 @@
   <div class="aksi" style="justify-content:space-between"><h2><span class="ikon-h" style="background:var(--merah-bg);color:var(--merah)">{{ ikon('awas') }}</span>Prioritas tindak lanjut</h2>
     <a class="kecil" href="{{ url_for('data', tl='Belum ditindaklanjuti') }}"><b>Lihat semua →</b></a></div>
   {% if not prioritas %}<div class="kosong">{{ ikon('cek') }}<p>Tidak ada kasus yang menunggu tindak lanjut.</p></div>{% else %}
-  <div class="tbl-wrap"><table>
+  <div class="tbl-wrap"><table class="tbl-nama">
     <thead><tr><th>Anak</th><th>PAUD / Kelurahan</th><th>Tgl periksa</th><th>KPSP</th><th>Status gizi</th><th>TB/U</th><th></th></tr></thead>
     <tbody>{% for r in prioritas %}<tr>
       <td><span class="nama-anak"><span class="ava {{ r.jk }}">{{ r.anak[:1]|upper }}</span><span>{{ r.anak }}<br><span class="redup kecil" style="font-weight:500">{{ r.umur_teks }}</span></span></span></td>
@@ -58,7 +58,7 @@
 
 <div class="kartu reveal">
   <h2><span class="ikon-h">{{ ikon('grafik') }}</span>Rekap per kelurahan</h2>
-  <div class="tbl-wrap"><table>
+  <div class="tbl-wrap"><table class="tbl-nama">
     <thead><tr><th>Kelurahan</th><th class="n">PAUD</th><th class="n">Terskrining</th><th class="n">Sesuai</th><th class="n">Meragukan</th><th class="n">Penyimpangan</th><th style="min-width:140px">% sesuai</th><th class="n">Masalah gizi</th><th class="n">Pendek</th></tr></thead>
     <tbody>{% for nama, k in per_kel %}{% set pct = k['Sesuai umur'] / k.total * 100 %}<tr>
       <td><b>{{ nama }}</b></td><td class="n">{{ k.paud|length }}</td><td class="n">{{ k.total }}</td>
@@ -71,7 +71,7 @@
 
 <div class="kartu reveal">
   <h2><span class="ikon-h">{{ ikon('sekolah') }}</span>Rekap per PAUD / TK</h2>
-  <div class="tbl-wrap"><table>
+  <div class="tbl-wrap"><table class="tbl-nama">
     <thead><tr><th>PAUD / TK</th><th>Kelurahan</th><th class="n">Terskrining</th><th class="n">Sesuai</th><th class="n">Meragukan</th><th class="n">Penyimpangan</th><th class="n">Masalah gizi</th></tr></thead>
     <tbody>{% for key, k in per_paud %}<tr>
       <td><b>{{ key[0] }}</b></td><td>{{ key[1] }}</td><td class="n">{{ k.total }}</td>

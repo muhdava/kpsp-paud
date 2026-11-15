@@ -6,7 +6,7 @@
 {% set lengkap = true %}{% include "_filter.html" %}
 <div class="kartu reveal">
   <div class="grafik-kepala" style="margin-bottom:14px"><h2><span class="ikon-h">{{ ikon('daftar') }}</span>Daftar hasil skrining</h2><span class="badge abu">{{ rows|length }} data</span></div>
-  <div class="tbl-wrap"><table class="tbl-data">
+  <div class="tbl-wrap"><table class="tbl-data tbl-nama">
     <thead><tr><th>Anak</th><th>PAUD / Kelurahan</th><th>Tgl periksa</th><th>KPSP</th><th>BB / TB</th><th>Status gizi</th><th>TB/U</th><th>LK / LiLA</th><th>Tindak lanjut</th></tr></thead>
     <tbody>{% for r in rows %}<tr class="baris-link" data-href="{{ url_for('skrining_detail', sid=r.id) }}">
       <td><a class="nama-anak" href="{{ url_for('skrining_detail', sid=r.id) }}"><span class="ava {{ r.jk }}">{{ r.anak[:1]|upper }}</span><span>{{ r.anak }}<small class="sub-sel">{{ r.umur_teks }}</small></span></a></td>

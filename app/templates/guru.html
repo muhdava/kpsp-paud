@@ -16,7 +16,7 @@
       <a class="btn" href="{{ url_for('anak_form') }}">{{ ikon('plus') }} Tambah anak</a></div>
   {% else %}
   <div class="cari">{{ ikon('cari') }}<input id="cari" placeholder="Cari nama anak…"></div>
-  <div class="tbl-wrap"><table id="tbl" class="tbl-hp">
+  <div class="tbl-wrap"><table id="tbl" class="tbl-hp tbl-nama">
     <thead><tr><th>Nama anak</th><th>Umur hari ini</th><th>Skrining terakhir</th><th>KPSP</th><th>Status gizi</th><th>Tindak lanjut Puskesmas</th><th></th></tr></thead>
     <tbody>
     {% for a in anak %}
