@@ -232,14 +232,17 @@ def init_db():
     if not con.execute("SELECT 1 FROM kelurahan").fetchone():
         con.executemany("INSERT INTO kelurahan (nama) VALUES (?)", [(k,) for k in KELURAHAN_TETAP])
     if not con.execute("SELECT 1 FROM pengguna WHERE peran='puskesmas'").fetchone():
-        pw = os.environ.get("ADMIN_PASSWORD") or secrets.token_urlsafe(9)
+        pw_env = os.environ.get("ADMIN_PASSWORD")
+        pw = pw_env or secrets.token_urlsafe(9)
         con.execute("INSERT INTO pengguna (username, password_hash, nama, peran, aktif) "
                     "VALUES ('admin', ?, 'Petugas Puskesmas', 'puskesmas', 1)",
                     (generate_password_hash(pw),))
-        with open(os.path.join(INSTANCE, "admin_awal.txt"), "w") as f:
-            f.write(f"username: admin\npassword: {pw}\n"
-                    "Segera ganti password setelah login (menu Profil).\n")
-        print(f"* Akun admin dibuat. Lihat {os.path.join(INSTANCE, 'admin_awal.txt')}")
+        if not pw_env:  # password acak dicatat di samping file database yang dipakai
+            catatan = os.path.join(os.path.dirname(os.path.abspath(DB_PATH)), "admin_awal.txt")
+            with open(catatan, "w") as f:
+                f.write(f"username: admin\npassword: {pw}\n"
+                        "Segera ganti password setelah login (menu Profil).\n")
+            print(f"* Akun admin dibuat. Lihat {catatan}")
     con.commit()
     con.close()
 

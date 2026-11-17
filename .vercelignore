@@ -3,3 +3,10 @@ app/instance/
 *.db
 __pycache__/
 .claude/
+tests/
+tools/
+db/
+docs/
+*.xlsx
+*.csv
+.env

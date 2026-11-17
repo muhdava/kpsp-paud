@@ -10,3 +10,10 @@ __pycache__/
 
 # tangkapan layar lokal
 tampilan-hp/
+
+# file data mentah / ekspor yang bisa berisi data pribadi anak & sekolah
+*.xlsx
+*.xls
+*.csv
+.env
+.pytest_cache/

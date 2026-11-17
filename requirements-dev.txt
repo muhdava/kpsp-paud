@@ -1,0 +1,7 @@
+# Untuk pengembangan, pengujian, dan membangun ulang data (tidak dipakai di Vercel)
+-r requirements.txt
+pytest>=8
+pymupdf>=1.24      # tools/ekstrak_gambar_kpsp.py
+openpyxl>=3.1      # tools/buat_who_lms.py
+pillow>=10         # tools/buat_ikon.py
+playwright>=1.45   # tools/buat_ikon.py (memakai Edge/Chrome yang terpasang)
